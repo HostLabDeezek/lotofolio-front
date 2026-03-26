@@ -1,0 +1,20 @@
+$navy: #061B4A;
+
+.main-content {
+  min-height: calc(100vh - 64px - 52px);
+  background: #F0F4FA;
+}
+
+.site-footer {
+  background: $navy;
+  color: rgba(#ffffff, 0.5);
+  text-align: center;
+  padding: 1rem 2rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+
+  p {
+    margin: 0;
+  }
+}

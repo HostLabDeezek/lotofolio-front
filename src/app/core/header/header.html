@@ -1,0 +1,55 @@
+<!-- src/app/core/layout/header/header.component.html -->
+<header class="header">
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo">
+      <a routerLink="/">
+        Loto App
+      </a>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+      <!-- Liens publics -->
+      <a routerLink="/jeux" routerLinkActive="active">
+        Jeux
+      </a>
+      <a routerLink="/tirages" routerLinkActive="active">
+        Tirages
+      </a>
+
+      <!-- Liens authentifiés -->
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/grilles" routerLinkActive="active">
+          Mes Grilles
+        </a>
+        <a routerLink="/resultats" routerLinkActive="active">
+          Résultats
+        </a>
+      }
+    </nav>
+
+    <!-- User menu -->
+    <div class="user-menu">
+      @if (authService.isLoggedIn()) {
+        <div class="user-info">
+          <span class="username">
+            👤 {{ authService.user()?.name }}
+          </span>
+          <button class="btn-logout" (click)="logout()">
+            Déconnexion
+          </button>
+        </div>
+      } @else {
+        <div class="auth-buttons">
+          <a routerLink="/login" class="btn btn-outline">
+            Connexion
+          </a>
+          <a routerLink="/register" class="btn btn-primary">
+            Inscription
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</header>

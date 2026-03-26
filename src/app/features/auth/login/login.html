@@ -1,0 +1,77 @@
+<div class="login-container">
+
+  <div class="app-title">
+    <h1>FDJ</h1>
+    <p>Française des jeux</p>
+  </div>
+
+  <div class="login-card">
+
+    <!-- 📌 TITRE -->
+    <h1>Connexion</h1>
+    <p>Bienvenue ! Connectez-vous pour continuer</p>
+
+    <!-- 🚨 MESSAGE D'ERREUR -->
+    @if (errorMessage()) {
+    <div class="error-message">
+      {{ errorMessage() }}
+    </div>
+    }
+
+    <!-- 📝 FORMULAIRE -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+      <!-- 📧 EMAIL -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" formControlName="email" placeholder="votreemail@example.com" />
+
+        <!-- Erreur EMAIL -->
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+        <div class="field-error">
+          @if (loginForm.get('email')?.hasError('required')) {
+          <p>L'email est obligatoire</p>
+          }
+          @if (loginForm.get('email')?.hasError('email')) {
+          <p>Format d'email invalide</p>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- 🔒 MOT DE PASSE -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" formControlName="password" placeholder="••••••••" />
+
+        <!-- Erreur PASSWORD -->
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+        <div class="field-error">
+          @if (loginForm.get('password')?.hasError('required')) {
+          <p>Le mot de passe est obligatoire</p>
+          }
+          @if (loginForm.get('password')?.hasError('minlength')) {
+          <p>Minimum 6 caractères</p>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- 🚀 BOUTON CONNEXION -->
+      <button type="submit" [disabled]="loginForm.invalid || isLoading()">
+        @if (isLoading()) {
+        <span>Connexion...</span>
+        } @else {
+        <span>Se connecter</span>
+        }
+      </button>
+
+      <!-- 📝 LIEN INSCRIPTION -->
+      <p class="register-link">
+        Pas encore de compte ?
+        <a routerLink="/register">S'inscrire</a>
+      </p>
+    </form>
+
+  </div>
+</div>

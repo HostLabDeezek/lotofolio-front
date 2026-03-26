@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+$navy: #061B4A;
+$blue: #1557D4;
+$blue-hover: #3B7EF6;
+$gold: #F5A623;
+$white: #ffffff;
+
+.header {
+  background-color: $navy;
+  border-bottom: 3px solid $blue;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 24px rgba(6, 27, 74, 0.5);
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.logo a {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $white;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: $gold;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    color: rgba($white, 0.85);
+  }
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex: 1;
+  padding-left: 3.5rem;
+}
+
+.nav a {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba($white, 0.65);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.03em;
+  position: relative;
+  transition: color 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: $gold;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    color: $white;
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+
+  &.active {
+    color: $white;
+    font-weight: 600;
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.username {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba($white, 0.9);
+  letter-spacing: 0.02em;
+}
+
+.btn-logout {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba($white, 0.7);
+  background: transparent;
+  border: 1.5px solid rgba($white, 0.25);
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: $white;
+    border-color: rgba($white, 0.55);
+    background: rgba($white, 0.07);
+  }
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.45rem 1.1rem;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+.btn-outline {
+  color: rgba($white, 0.75);
+  border: 1.5px solid rgba($white, 0.25);
+
+  &:hover {
+    color: $white;
+    border-color: rgba($white, 0.55);
+    background: rgba($white, 0.07);
+  }
+}
+
+.btn-primary {
+  background: $blue;
+  color: $white;
+  border: 1.5px solid $blue;
+
+  &:hover {
+    background: $blue-hover;
+    border-color: $blue-hover;
+  }
+}
