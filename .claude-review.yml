@@ -1,0 +1,76 @@
+# ============================================================
+# Configuration Claude Code Review — loto-frontend
+# ============================================================
+# Ce fichier configure la review automatique par Claude.
+# Place-le à la racine de chaque projet.
+# ============================================================
+
+# ---- Langage et version ----
+language: typescript
+version: "5.9"
+
+# ---- Framework et écosystème ----
+framework: angular
+framework_version: "21"
+
+# Librairies principales du projet (Claude vérifiera les bonnes pratiques)
+libraries:
+  - "@angular/material: 21"
+  - "@ngrx/signals: 21"
+  - "rxjs: 7.8"
+  - "@auth0/angular-jwt: 5"
+  - "@angular/ssr: 21"
+
+# ---- Style guide ----
+# Prettier est configuré dans le package.json du projet (printWidth: 100, singleQuote)
+style_guide: prettier
+
+# ---- Profondeur de review ----
+# - quick    : Résumé rapide, seulement les problèmes critiques
+# - standard : Review équilibrée, problèmes + suggestions principales
+# - detailed : Review approfondie avec pédagogie (recommandé pour apprendre)
+review_depth: detailed
+
+# ---- Fichiers à ignorer dans la review ----
+ignore_patterns:
+  - "package-lock.json"
+  - "yarn.lock"
+  - "pnpm-lock.yaml"
+  - "*.min.js"
+  - "*.min.css"
+  - "dist/**"
+  - "build/**"
+  - "node_modules/**"
+  - ".env*"
+  - "*.generated.*"
+  - ".angular/**"
+
+# ---- Règles custom Angular ----
+custom_rules:
+  # Architecture Angular
+  - "Utiliser les standalone components (pas de NgModule)"
+  - "Utiliser les nouveaux control flow (@if, @for, @switch) plutôt que *ngIf/*ngFor"
+  - "Utiliser les Signals Angular (signal, computed, effect) plutôt que BehaviorSubject"
+  - "Utiliser inject() plutôt que l'injection par constructeur"
+
+  # State management
+  - "Utiliser @ngrx/signals (signalStore) pour le state management partagé"
+  - "Ne pas mélanger NgRx Signals et BehaviorSubject dans un même service"
+
+  # RxJS
+  - "Toujours unsubscribe des Observables (takeUntilDestroyed, async pipe, ou DestroyRef)"
+  - "Utiliser firstValueFrom() pour convertir les Observables en Promises dans les services"
+  - "Éviter les subscribe() imbriqués — utiliser switchMap, concatMap, etc."
+
+  # SSR
+  - "Toujours utiliser isPlatformBrowser(PLATFORM_ID) avant d'accéder à window, document ou localStorage"
+
+  # Sécurité
+  - "Vérifier que les routes protégées utilisent authGuard"
+  - "Le token JWT doit transiter via authInterceptor, jamais en dur dans les appels HTTP"
+
+  # Qualité
+  - "Pas de 'any' en TypeScript — typer toutes les données"
+  - "Pas de console.log en dehors du développement"
+  - "Les composants doivent utiliser OnPush change detection"
+  - "Respecter Prettier : 100 chars max, single quotes"
