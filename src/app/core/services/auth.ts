@@ -1,8 +1,10 @@
 import { LoginRequest, LoginResponse, User } from '../../shared/models/user.model';
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -11,8 +13,9 @@ export class Auth {
 
   private http = inject(HttpClient);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
-  private readonly apiUrl = 'http://localhost:3000/api/auth';
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   user = signal<User | null>(null);
 
@@ -20,18 +23,11 @@ export class Auth {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
         tap(response => {
-          // Le backend renvoie : { user: {...}, token: "abc123" }
 
-          // 📝 ÉTAPE 1 : Sauvegarder le TOKEN dans localStorage
-          localStorage.setItem('token', response.token);
-          // → Pourquoi ? Pour le renvoyer au backend dans les prochaines requêtes
-
-          // 📝 ÉTAPE 2 : Sauvegarder l'USER dans localStorage
-          localStorage.setItem('user', JSON.stringify(response.user));
-          // → JSON.stringify() transforme l'objet en texte
-          // → Pourquoi ? Pour le récupérer au prochain démarrage de l'app
-
-          // 📝 ÉTAPE 3 : Mettre l'user dans le signal
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+          }
           this.user.set(response.user);
           // → Pourquoi ? Pour l'afficher immédiatement dans les composants
         })
@@ -39,19 +35,21 @@ export class Auth {
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    // 🗑️ ÉTAPE 2 : Vider le signal
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     this.user.set(null);
     this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
     return !!localStorage.getItem('token');
   }
 
   getToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
     return localStorage.getItem('token');
   }
 }

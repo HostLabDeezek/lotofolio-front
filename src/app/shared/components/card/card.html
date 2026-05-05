@@ -8,9 +8,9 @@
             <p class="jeu-card__description">{{ jeu().description }}</p>
             }
             <p class="jeu-card__meta">
-                {{ jeu().nbNumeros }} numéros sur {{ jeu().maxNumeros }}
-                @if (jeu().nbNumeroChance) {
-                · {{ jeu().nbNumeroChance }} numéro chance sur {{ jeu().maxNumeroChance }}
+                {{ jeu().nbNumerosATirer }} numéros sur {{ jeu().intervalNumero }}
+                @if (jeu().nbNumeroChanceATirer) {
+                · {{ jeu().nbNumeroChanceATirer }} numéro chance sur {{ jeu().intervalNumeroChance }}
                 }
             </p>
         </div>

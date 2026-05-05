@@ -3,8 +3,8 @@ export interface Jeu {
     nom: string;
     description: string | null;
     regle: string | null;
-    maxNumeroChance: number;
-    maxNumeros: number;
-    nbNumeroChance: number;
-    nbNumeros: number;
+    intervalNumeroChance: number;
+    intervalNumero: number;
+    nbNumeroChanceATirer: number;
+    nbNumerosATirer: number;
 }

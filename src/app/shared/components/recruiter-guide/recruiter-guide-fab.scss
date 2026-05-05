@@ -1,0 +1,22 @@
+:host {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 9999;
+}
+
+@media (min-width: 600px) {
+  :host {
+    bottom: 24px;
+    right: 24px;
+  }
+}
+
+:host button {
+  text-transform: none;
+  font-weight: 600;
+}
+
+:host button mat-icon {
+  margin-right: 0.5rem;
+}

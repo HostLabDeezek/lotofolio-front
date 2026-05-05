@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   selector: 'app-login',
   standalone: true,
   imports: [
-    ReactiveFormsModule, 
+    ReactiveFormsModule,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
@@ -35,22 +35,14 @@ export class Login {
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.authService.login({ email, password }).subscribe({
-      next: (response) => {
-        console.log("Login successful:", response);
-        localStorage.setItem('token', response.token);
+      next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/home']);
+        this.router.navigate(['/']);
       },
 
-      error: (error) => {
-        console.error("Login failed:", error);
+      error: (error: Error) => {
         this.isLoading.set(false);
-        if (error.status === 401) {
-          this.errorMessage.set('Email ou mot de passe incorrect');
-        } else {
-          this.errorMessage.set('Une erreur est survenue');
-        }
-
+        this.errorMessage.set(error.message);
       }
 
     });

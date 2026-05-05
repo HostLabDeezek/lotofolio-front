@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { signalStore, withState, withMethods } from '@ngrx/signals';
 import { patchState } from '@ngrx/signals';
 import { Jeu } from '../models/jeu.model';
-import { JeuService } from '../../services/jeu.service';
+import { JeuService } from '../services/jeu.service';
 
 export interface JeuState {
     jeux: Jeu[];

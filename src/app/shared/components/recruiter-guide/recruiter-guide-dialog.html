@@ -1,0 +1,314 @@
+<div mat-dialog-title class="dialog__title">
+  <mat-icon aria-hidden="true" color="primary">waving_hand</mat-icon>
+  <div class="dialog__title-text">
+    <h2>Bienvenue sur Lotofolio</h2>
+    <small>Guide rapide pour explorer le projet en 5 minutes</small>
+  </div>
+  <button mat-icon-button class="dialog__close" aria-label="Fermer" (click)="close()">
+    <mat-icon aria-hidden="true">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Intro -->
+  <div class="dialog__intro">
+    <p>
+      Bonjour, et merci de prendre le temps de regarder mon travail. Avant de plonger dans Lotofolio, sachez que j'ai
+      également un second projet en <strong>React / Node</strong> que vous pouvez consulter ici :
+      <a href="https://technopark-front-ten.vercel.app/" target="_blank" rel="noopener noreferrer">
+        technopark-front-ten.vercel.app
+      </a>. Les deux projets illustrent ma polyvalence sur les deux grands frameworks front-end du marché.
+    </p>
+
+    <p>
+      Bienvenue sur <strong>Lotofolio</strong> ! J'ai créé cette application full-stack
+      (<strong>Angular / Node.js</strong>) pour vous offrir un aperçu concret de mes compétences. C'est un projet de
+      maintien à niveau et de formation continue qui me permet d'appliquer les meilleures pratiques de développement —
+      il illustre mon engagement professionnel : fournir un code propre, structuré et maintenable, du back-end jusqu'à
+      l'interface utilisateur.
+    </p>
+
+    <p>
+      J'en ai réalisé l'intégralité du développement. L'interface est conçue avec Angular (système moderne de
+      <strong>Signals</strong>), tandis que la logique métier et la base de données s'appuient sur
+      <strong>Node.js</strong> et <strong>PostgreSQL</strong>. J'aborde ce projet avec la même rigueur qu'en entreprise
+      : sécurité et stabilité passent avant tout. L'application dispose aujourd'hui d'une base technique solide et
+      entièrement sécurisée — authentification, structure des données, architecture front/back réfléchie — prête à
+      accueillir les prochains écrans métier (jeu, tirage, résultats).
+    </p>
+  </div>
+
+  <!-- À savoir avant de commencer -->
+  <div class="callout">
+    <mat-icon class="callout__icon" aria-hidden="true">info</mat-icon>
+    <div>
+      <p class="callout__title">À savoir avant de commencer</p>
+      <p class="callout__body">
+        Le back est hébergé sur le plan gratuit de Render, qui met le serveur en
+        veille après ~15 minutes d'inactivité. La
+        <strong>première requête peut prendre 30 à 60 secondes</strong> (cold start),
+        ensuite tout est instantané. Si la page de connexion semble figée au premier
+        essai, laissez-lui ce petit délai. Côté périmètre, seuls les endpoints
+        <code>/auth</code> et <code>GET /jeux</code> sont actifs aujourd'hui — les
+        routes Grilles, Tirages, Parties, Resultats sont à venir (modèles déjà
+        en place).
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Compte de démo -->
+  <h3 class="section-title">Compte de démonstration</h3>
+  <p class="section-lead">
+    Le mot de passe :
+    <mat-chip-set><mat-chip class="chip-mono">{{ demoPassword }}</mat-chip></mat-chip-set>
+  </p>
+  <div class="demo-table-wrapper">
+    <table class="demo-table">
+      <thead>
+        <tr>
+          <th>Rôle</th>
+          <th>Email</th>
+          <th>Username</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ demoAccount.role }}</td>
+          <td class="mono">{{ demoAccount.email }}</td>
+          <td>{{ demoAccount.username }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Parcours -->
+  <h3 class="section-title">Parcours pas-à-pas</h3>
+  <p class="section-lead">
+    Voici ce que vous pouvez faire aujourd'hui pour valider le bon fonctionnement de
+    l'application telle qu'elle est à ce stade :
+  </p>
+
+  <app-recruiter-step number="1" icon="login" title="Se connecter">
+    <p>
+      Cliquez sur « Connexion », saisissez les credentials du compte de démo
+      ci-dessus. Le back renvoie un <strong>JWT</strong> qui est stocké en
+      <code>localStorage</code>. Toutes les requêtes suivantes ajoutent
+      automatiquement l'en-tête <code>Authorization: Bearer …</code> via un
+      <strong>HTTP interceptor</strong>.
+    </p>
+  </app-recruiter-step>
+
+  <app-recruiter-step number="2" icon="dns" title="Arriver sur le home">
+    <p>
+      Une fois loggué, vous arrivez sur la page d'accueil protégée par un
+      <code>authGuard</code>. Le composant déclenche
+      <code>JeuStore.loadJeux()</code> — un <strong>signal store</strong>
+      <code>&#64;ngrx/signals</code> qui charge la liste des jeux et expose
+      <code>loading</code>, <code>error</code> et <code>jeux</code> en signaux
+      réactifs.
+    </p>
+  </app-recruiter-step>
+
+  <app-recruiter-step number="3" icon="construction" title="Suite à venir (en cours de développement)">
+    <p>
+      Les écrans pour <strong>composer une grille</strong>,
+      <strong>déclencher un tirage</strong> et
+      <strong>consulter les résultats</strong> sont la prochaine étape. Côté back, les
+      modèles Prisma <code>Grille</code>, <code>Tirage</code>, <code>Partie</code> et
+      <code>Resultat</code> sont déjà en place avec leurs relations — il reste à
+      câbler les routes et les services.
+    </p>
+  </app-recruiter-step>
+
+  <hr class="divider" />
+
+  <!-- Encart parcours utilisateur -->
+  <h3 class="section-title">Côté utilisateur</h3>
+  <mat-card appearance="outlined" class="parcours-card">
+    <p class="parcours-card__title">
+      <mat-icon aria-hidden="true" color="primary">person</mat-icon>
+      Ce que voit un utilisateur connecté
+    </p>
+    <div class="parcours-card__body">
+      <p>
+        Aujourd'hui, l'utilisateur connecté accède au header (avec son nom + bouton de
+        déconnexion) et à la liste des jeux disponibles. Le bouton de déconnexion
+        purge le token, vide le signal <code>user</code> du <code>AuthService</code>
+        et redirige vers <code>/login</code>. Toute requête HTTP qui revient en
+        <strong>401</strong> (token expiré, par exemple) déclenche le même flux
+        automatiquement via l'<code>authInterceptor</code>.
+      </p>
+    </div>
+  </mat-card>
+
+  <hr class="divider" />
+
+  <!-- Pour aller plus loin -->
+  <h3 class="section-title">Pour aller plus loin (optionnel)</h3>
+
+  <app-recruiter-step number="4" icon="bug_report" title="Inspecter les requêtes dans les DevTools">
+    <p>
+      Ouvrez l'onglet <strong>Réseau</strong>, faites une action quelconque. Vous
+      verrez l'en-tête <code>Authorization: Bearer …</code> ajouté automatiquement
+      sur toutes les requêtes vers l'API. Si vous supprimez le token de
+      <code>localStorage</code> et faites une requête, l'<code>errorInterceptor</code>
+      normalise le message et l'<code>authInterceptor</code> vous redirige vers
+      <code>/login</code>.
+    </p>
+  </app-recruiter-step>
+
+  <app-recruiter-step number="5" icon="shield" title="Tester le rate-limit du back">
+    <p>
+      Faites 6 tentatives de login en moins de 15 minutes avec un mauvais mot de
+      passe. La 6ᵉ renvoie un <strong>HTTP 429</strong>. Le rate-limit est ciblé
+      uniquement sur <code>/auth/login</code> (5 / 15 min) et <code>/auth/register</code>
+      (3 / heure) — pas un rate-limit global naïf qui pénaliserait les vraies
+      requêtes.
+    </p>
+  </app-recruiter-step>
+
+  <app-recruiter-step number="6" icon="code" title="Lire le code (les repos sont publics)">
+    <p>Les deux dépôts GitHub sont publics et documentés.</p>
+    <p>
+      <a [href]="contact.githubFront" target="_blank" rel="noopener noreferrer">
+        github.com/HostLabDeezek/lotofolio-front
+      </a>
+      <br />
+      <a [href]="contact.githubBack" target="_blank" rel="noopener noreferrer">
+        github.com/HostLabDeezek/lotofolio-back
+      </a>
+    </p>
+  </app-recruiter-step>
+
+  <hr class="divider" />
+
+  <!-- Points techniques -->
+  <h3 class="section-title">Points techniques à noter</h3>
+
+  <p class="section-lead"><strong>Front (Angular 21)</strong></p>
+  <ul class="tech-list">
+    <li>
+      <strong>Angular 21 standalone</strong> partout (zéro NgModule), <code>inject()</code>
+      au lieu des constructeurs DI.
+    </li>
+    <li>
+      <strong>Signals + <code>&#64;ngrx/signals</code></strong> pour le state global
+      (<code>JeuStore</code>) — modèle réactif moderne, fini les Observables passés
+      aux <code>async pipe</code>.
+    </li>
+    <li>
+      <strong>Auth JWT</strong> : <code>AuthService</code> avec un signal
+      <code>user</code>, garde de route <code>authGuard</code> sur l'arbre protégé.
+    </li>
+    <li>
+      <strong>Deux HTTP interceptors</strong> :
+      <code>authInterceptor</code> (Bearer auto + auto-logout sur 401) et
+      <code>errorInterceptor</code> (normalisation des messages d'erreur API en une
+      forme unique côté UI).
+    </li>
+    <li>
+      <strong>SSR-safe</strong> : tous les accès <code>localStorage</code> sont
+      protégés par <code>isPlatformBrowser(PLATFORM_ID)</code>, l'app peut tourner en
+      Angular SSR sans planter au render initial.
+    </li>
+    <li>
+      <strong>TypeScript strict</strong> + <code>strictTemplates</code> activés —
+      pas de <code>any</code> implicite, les erreurs de type dans les templates
+      cassent le build.
+    </li>
+    <li>
+      <strong>Material 3</strong> avec theming via <code>mat.theme()</code> et CSS
+      variables système (<code>var(--mat-sys-…)</code>) plutôt que des couleurs en
+      dur.
+    </li>
+  </ul>
+
+  <p class="section-lead"><strong>Back</strong></p>
+  <ul class="tech-list">
+    <li>
+      <strong>Node 20 + Express 5 + TypeScript strict</strong> (ESM natif), Prisma 7
+      + PostgreSQL 16.
+    </li>
+    <li>
+      <strong>Validation des variables d'env au démarrage</strong> avec Zod : le
+      process refuse de booter si <code>JWT_SECRET</code> &lt; 32 chars ou si
+      <code>DATABASE_URL</code> est invalide. <em>Fail fast</em> plutôt qu'API mal
+      configurée en prod.
+    </li>
+    <li>
+      <strong>Liveness <code>/health</code> vs readiness <code>/ready</code></strong>
+      : seul <code>/ready</code> tape la BDD (<code>SELECT 1</code>), évite les
+      redémarrages intempestifs sur un hoquet réseau Postgres.
+    </li>
+    <li>
+      <strong>Rate-limit ciblé</strong> par endpoint sensible (5 logins / 15 min, 3
+      registers / heure) au lieu d'un rate-limit global.
+    </li>
+    <li>
+      <strong>CORS en whitelist explicite</strong> lue depuis l'env (multi-origines
+      via <code>,</code>), <code>helmet</code>, mots de passe hashés en bcrypt 10
+      rounds.
+    </li>
+    <li>
+      <strong>Graceful shutdown</strong> sur SIGINT / SIGTERM avec
+      <code>prisma.$disconnect()</code> et timeout 10 s — important pour les
+      déploiements zero-downtime sur Render.
+    </li>
+    <li>
+      <strong>Infra as Code</strong> via <code>render.yaml</code> : déploiement
+      reproductible, <code>JWT_SECRET</code> généré côté Render, jamais en clair.
+    </li>
+    <li>
+      <strong>Logs structurés</strong> Winston (JSON en prod, coloré en dev).
+    </li>
+    <li>
+      <strong>Validation Zod par route</strong>, format d'erreur standardisé
+      <code>{{ '{' }} error, details? {{ '}' }}</code>.
+    </li>
+  </ul>
+
+  <p class="section-lead"><strong>Limites assumées</strong></p>
+  <ul class="tech-list tech-list--limits">
+    <li>Pas de tests automatisés (front et back) — le plus gros gap, conscient.</li>
+    <li>Pas de refresh token (JWT 7 jours unique, pas de révocation côté serveur).</li>
+    <li>RBAC pas encore actif (enum <code>Role</code> prêt en base, middleware à venir).</li>
+    <li>Pas de CI (pas de GitHub Actions configuré).</li>
+    <li>Endpoints Grilles / Tirages / Parties / Resultats à implémenter.</li>
+  </ul>
+
+  <hr class="divider" />
+
+  <!-- Contact -->
+  <div class="contact">
+    <p class="contact__lead">
+      Merci encore pour votre temps. Si vous avez la moindre question sur un choix
+      technique, un arbitrage ou une partie du code, je serai ravi d'en discuter.
+    </p>
+    <div class="contact__buttons">
+      <a mat-stroked-button [href]="'mailto:' + contact.email">
+        <mat-icon>email</mat-icon>
+        {{ contact.email }}
+      </a>
+      <a mat-stroked-button [href]="contact.linkedin" target="_blank" rel="noopener noreferrer">
+        <mat-icon>link</mat-icon>
+        LinkedIn
+      </a>
+      <a mat-stroked-button [href]="contact.githubFront" target="_blank" rel="noopener noreferrer">
+        <mat-icon>code</mat-icon>
+        Repo front
+      </a>
+      <a mat-stroked-button [href]="contact.githubBack" target="_blank" rel="noopener noreferrer">
+        <mat-icon>code</mat-icon>
+        Repo back
+      </a>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button (click)="close()">J'ai lu, explorons le site</button>
+</mat-dialog-actions>

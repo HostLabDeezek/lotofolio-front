@@ -70,7 +70,10 @@ custom_rules:
   - "Le token JWT doit transiter via authInterceptor, jamais en dur dans les appels HTTP"
 
   # Qualité
-  - "Pas de 'any' en TypeScript — typer toutes les données"
+  - "Utiliser 'strict': true dans tsconfig.json"
+  - "Éviter les 'as any' — utiliser des type guards"
+  - "Les interfaces doivent être readonly pour les données immutables"
+  - "Utiliser les utility types (Partial<T>, Pick<T, K>, etc.)"
   - "Pas de console.log en dehors du développement"
   - "Les composants doivent utiliser OnPush change detection"
   - "Respecter Prettier : 100 chars max, single quotes"

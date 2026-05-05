@@ -1,6 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Card } from '../shared/components/card/card';
 import { JeuStore } from '../shared/stores/jeu.store';
-import { Card } from '../shared/components/card/card'; // Import the Card component
 
 @Component({
   selector: 'app-home-page',
@@ -8,11 +8,6 @@ import { Card } from '../shared/components/card/card'; // Import the Card compon
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
-export class HomePage implements OnInit {
+export class HomePage {
   jeuStore = inject(JeuStore);
-
-  ngOnInit(): void {
-    this.jeuStore.loadJeux();
-  }
-
 }

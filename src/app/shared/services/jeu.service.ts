@@ -1,15 +1,14 @@
-// services/jeu.service.ts
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { Jeu } from '../shared/models/jeu.model';
+import { Jeu } from '../models/jeu.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class JeuService {
 
-  private apiUrl = 'http://localhost:3000/api/jeux';
-
-  constructor(private http: HttpClient) {}
+  private apiUrl = `${environment.apiUrl}/jeux`;
+  private http = inject(HttpClient);
 
   getJeux(): Promise<Jeu[]> {
     return firstValueFrom(this.http.get<Jeu[]>(this.apiUrl));

@@ -5,9 +5,9 @@
 # ouverte ou mise à jour. Claude analyse le diff, vérifie
 # la qualité du code et poste un commentaire détaillé.
 # ============================================================
- 
+
 name: Claude Code Review
- 
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -15,28 +15,28 @@ on:
     branches:
       - develop
       - main
- 
+
 # Empêche les reviews en doublon si on push vite plusieurs fois
 concurrency:
   group: claude-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
- 
+
 permissions:
   contents: read
   pull-requests: write
- 
+
 jobs:
   claude-review:
     runs-on: ubuntu-latest
     timeout-minutes: 10
- 
+
     steps:
       # ---- 1. Checkout du code ----
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Historique complet pour comparer les branches
- 
+
       # ---- 2. Charger la config du projet ----
       - name: Load project config
         id: config
@@ -44,19 +44,11 @@ jobs:
           CONFIG_FILE=".claude-review.yml"
           if [ -f "$CONFIG_FILE" ]; then
             echo "config_found=true" >> $GITHUB_OUTPUT
- 
-            # Parser le YAML avec un simple script
-            LANGUAGE=$(grep '^language:' "$CONFIG_FILE" | awk '{print $2}')
-            VERSION=$(grep '^version:' "$CONFIG_FILE" | awk '{print $2}')
-            FRAMEWORK=$(grep '^framework:' "$CONFIG_FILE" | awk '{print $2}')
-            STYLE_GUIDE=$(grep '^style_guide:' "$CONFIG_FILE" | awk '{print $2}')
-            REVIEW_DEPTH=$(grep '^review_depth:' "$CONFIG_FILE" | awk '{print $2}')
- 
-            echo "language=${LANGUAGE:-unknown}" >> $GITHUB_OUTPUT
-            echo "version=${VERSION:-latest}" >> $GITHUB_OUTPUT
-            echo "framework=${FRAMEWORK:-none}" >> $GITHUB_OUTPUT
-            echo "style_guide=${STYLE_GUIDE:-standard}" >> $GITHUB_OUTPUT
-            echo "review_depth=${REVIEW_DEPTH:-detailed}" >> $GITHUB_OUTPUT
+            echo "language=$(yq e '.language' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+            echo "version=$(yq e '.version' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+            echo "framework=$(yq e '.framework' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+            echo "style_guide=$(yq e '.style_guide' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+            echo "review_depth=$(yq e '.review_depth' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
           else
             echo "config_found=false" >> $GITHUB_OUTPUT
             echo "language=unknown" >> $GITHUB_OUTPUT
@@ -65,7 +57,7 @@ jobs:
             echo "style_guide=standard" >> $GITHUB_OUTPUT
             echo "review_depth=detailed" >> $GITHUB_OUTPUT
           fi
- 
+
       # ---- 3. Détecter le type de branche (Git Flow) ----
       - name: Detect branch type
         id: branch
@@ -73,7 +65,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ github.head_ref }}"
           TARGET_BRANCH="${{ github.base_ref }}"
- 
+
           if [[ "$BRANCH_NAME" == feature/* ]]; then
             BRANCH_TYPE="feature"
             REVIEW_FOCUS="Nouvelle fonctionnalité — review complète : architecture, qualité, tests, conventions."
@@ -99,43 +91,42 @@ jobs:
             BRANCH_TYPE="other"
             REVIEW_FOCUS="Review standard — qualité générale du code."
           fi
- 
+
           echo "type=$BRANCH_TYPE" >> $GITHUB_OUTPUT
           echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "target=$TARGET_BRANCH" >> $GITHUB_OUTPUT
           echo "focus=$REVIEW_FOCUS" >> $GITHUB_OUTPUT
- 
+
       # ---- 4. Récupérer le diff de la PR ----
       - name: Get PR diff
         id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Récupérer le diff via l'API GitHub
-          DIFF=$(curl -s \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3.diff" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}")
- 
-          # Limiter la taille du diff pour ne pas dépasser les limites de l'API
-          DIFF_TRUNCATED=$(echo "$DIFF" | head -c 80000)
- 
-          if [ ${#DIFF} -gt 80000 ]; then
-            DIFF_TRUNCATED="${DIFF_TRUNCATED}
- 
-            ... [DIFF TRONQUÉ — trop volumineux pour une review complète. Concentre-toi sur les fichiers les plus critiques.]"
+          # Récupérer le diff avec gh CLI
+          gh pr diff ${{ github.event.pull_request.number }} > /tmp/pr_diff_full.txt
+
+          # Limiter la taille du diff pour ne pas dépasser les limites de l'API Claude
+          head -c 80000 /tmp/pr_diff_full.txt > /tmp/pr_diff.txt
+
+          # Vérifier si le diff a été tronqué
+          DIFF_SIZE=$(wc -c < /tmp/pr_diff_full.txt)
+          if [ "$DIFF_SIZE" -gt 80000 ]; then
+            echo "" >> /tmp/pr_diff.txt
+            echo "... [DIFF TRONQUÉ — trop volumineux pour une review complète. Concentre-toi sur les fichiers les plus critiques.]" >> /tmp/pr_diff.txt
           fi
- 
-          # Sauvegarder dans un fichier pour éviter les problèmes d'échappement
-          echo "$DIFF_TRUNCATED" > /tmp/pr_diff.txt
- 
-          # Stats du diff
-          FILES_CHANGED=$(echo "$DIFF" | grep -c '^diff --git' || true)
-          ADDITIONS=$(echo "$DIFF" | grep -c '^+[^+]' || true)
-          DELETIONS=$(echo "$DIFF" | grep -c '^-[^-]' || true)
- 
+
+          # Récupérer les stats via gh CLI
+          PR_STATS=$(gh pr view ${{ github.event.pull_request.number }} --json additions,deletions,changedFiles)
+
+          FILES_CHANGED=$(echo "$PR_STATS" | jq -r '.changedFiles')
+          ADDITIONS=$(echo "$PR_STATS" | jq -r '.additions')
+          DELETIONS=$(echo "$PR_STATS" | jq -r '.deletions')
+
           echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
           echo "additions=$ADDITIONS" >> $GITHUB_OUTPUT
           echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
- 
+
       # ---- 5. Charger les instructions de review custom (si elles existent) ----
       - name: Load custom review instructions
         id: custom
@@ -150,7 +141,7 @@ jobs:
           fi
           # Sauvegarder dans un fichier
           echo "$CUSTOM_INSTRUCTIONS" > /tmp/custom_instructions.txt
- 
+
       # ---- 6. Construire le prompt et appeler Claude ----
       - name: Call Claude API for review
         id: review
@@ -159,11 +150,11 @@ jobs:
         run: |
           DIFF_CONTENT=$(cat /tmp/pr_diff.txt)
           CUSTOM_CONTENT=$(cat /tmp/custom_instructions.txt)
- 
+
           # Construire le prompt JSON-safe
           cat > /tmp/review_request.json << 'JSONEOF'
           {
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-6",
             "max_tokens": 4096,
             "messages": [
               {
@@ -173,17 +164,17 @@ jobs:
             ]
           }
           JSONEOF
- 
+
           # Construire le prompt complet
           PROMPT=$(cat <<PROMPTEOF
           Tu es un expert en code review senior. Ton rôle est de relire cette Pull Request et de fournir un retour détaillé, pédagogique et bienveillant pour aider le développeur à progresser.
- 
+
           ## Contexte du projet
           - **Langage** : ${{ steps.config.outputs.language }} (version ${{ steps.config.outputs.version }})
           - **Framework** : ${{ steps.config.outputs.framework }}
           - **Style guide** : ${{ steps.config.outputs.style_guide }}
           - **Profondeur de review** : ${{ steps.config.outputs.review_depth }}
- 
+
           ## Contexte de la PR
           - **Branche** : ${{ steps.branch.outputs.name }} → ${{ steps.branch.outputs.target }}
           - **Type** : ${{ steps.branch.outputs.type }}
@@ -191,10 +182,10 @@ jobs:
           - **Titre** : ${{ github.event.pull_request.title }}
           - **Description** : ${{ github.event.pull_request.body }}
           - **Stats** : ${{ steps.diff.outputs.files_changed }} fichiers modifiés, +${{ steps.diff.outputs.additions }} / -${{ steps.diff.outputs.deletions }}
- 
+
           ## Instructions custom du projet
           ${CUSTOM_CONTENT}
- 
+
           ## IMPORTANT — Règles de review
           1. Base ta review sur les bonnes pratiques de **${{ steps.config.outputs.language }} ${{ steps.config.outputs.version }}** spécifiquement
           2. Vérifie que les conventions de nommage du projet sont respectées
@@ -202,32 +193,32 @@ jobs:
           4. Propose des alternatives concrètes avec des exemples de code quand tu suggères un changement
           5. Sois pédagogique : explique le "pourquoi" de chaque suggestion pour que le développeur apprenne
           6. Adapte le niveau de détail au type de branche (${{ steps.branch.outputs.type }})
- 
+
           ## Format de réponse attendu
           Structure ta review ainsi :
- 
+
           ### 🎯 Résumé
           Un résumé en 2-3 phrases de ce que fait cette PR et ta première impression.
- 
+
           ### ✅ Points positifs
           Ce qui est bien fait (toujours commencer par le positif).
- 
+
           ### 🔴 Problèmes critiques
           Ce qui DOIT être corrigé avant merge (bugs, sécurité, breaking changes).
           Pour chaque problème, donne :
           - Le fichier et la ligne concernés
           - Pourquoi c'est un problème
           - Comment le corriger (avec exemple de code)
- 
+
           ### 🟡 Suggestions d'amélioration
           Ce qui pourrait être mieux mais n'est pas bloquant.
           Pour chaque suggestion :
           - Ce que tu ferais différemment
           - Pourquoi c'est mieux (la leçon à retenir)
- 
+
           ### 📚 Ce que tu peux apprendre de cette PR
           1-3 points pédagogiques tirés de cette review, avec des liens vers la documentation officielle si pertinent.
- 
+
           ### 📊 Score global
           Note la PR sur ces critères (sur 5) :
           - Lisibilité
@@ -235,29 +226,33 @@ jobs:
           - Sécurité
           - Performance
           - Respect des conventions
- 
+
           ---
- 
+
           ## Diff de la PR :
           \`\`\`diff
           ${DIFF_CONTENT}
           \`\`\`
           PROMPTEOF
           )
- 
-          # Encoder le prompt en JSON valide via Python
-          python3 -c "
-          import json, sys
- 
-          prompt = sys.stdin.read()
-          request = {
-              'model': 'claude-sonnet-4-20250514',
-              'max_tokens': 4096,
-              'messages': [{'role': 'user', 'content': prompt}]
+
+          # Créer un fichier temporaire avec toutes les variables
+          cat > /tmp/prompt_vars.json << EOF
+          {
+            "title": $(echo "${{ github.event.pull_request.title }}" | jq -R .),
+            "description": $(echo "${{ github.event.pull_request.body }}" | jq -Rs .),
+            "diff": $(cat /tmp/pr_diff.txt | jq -Rs .)
           }
-          print(json.dumps(request))
-          " <<< "$PROMPT" > /tmp/review_request.json
- 
+          EOF
+
+          # Utiliser ces variables dans le prompt Python
+          python3 -c "
+          import json
+          with open('/tmp/prompt_vars.json', 'r') as f:
+              vars = json.load(f)
+          # Construire le prompt avec vars['title'], vars['description'], etc.
+          "
+
           # Appeler l'API Claude
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST "https://api.anthropic.com/v1/messages" \
@@ -265,27 +260,27 @@ jobs:
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -d @/tmp/review_request.json)
- 
+
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | sed '$d')
- 
+
           if [ "$HTTP_CODE" != "200" ]; then
             echo "❌ Erreur API Claude (HTTP $HTTP_CODE): $BODY"
             echo "review_success=false" >> $GITHUB_OUTPUT
             echo "Erreur lors de l'appel à Claude." > /tmp/review_comment.txt
             exit 0
           fi
- 
+
           # Extraire le texte de la réponse
           REVIEW=$(echo "$BODY" | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           print(data['content'][0]['text'])
           ")
- 
+
           echo "$REVIEW" > /tmp/review_comment.txt
           echo "review_success=true" >> $GITHUB_OUTPUT
- 
+
       # ---- 7. Poster le commentaire sur la PR ----
       - name: Post review comment on PR
         if: always()
@@ -293,21 +288,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REVIEW_CONTENT=$(cat /tmp/review_comment.txt)
- 
+
           # Ajouter le header et footer
           COMMENT=$(cat <<COMMENTEOF
-          ## 🤖 Claude Code Review
- 
-          > **Projet** : ${{ steps.config.outputs.language }} ${{ steps.config.outputs.version }} | **Type** : ${{ steps.branch.outputs.type }} | **Profondeur** : ${{ steps.config.outputs.review_depth }}
- 
+          ## 🤖 Claude Code Review — ${{ steps.branch.outputs.type }}
+
+          | **Langage** | **Framework** | **Fichiers** | **Lignes** |
+          |-------------|---------------|--------------|------------|
+          | ${{ steps.config.outputs.language }} ${{ steps.config.outputs.version }} | ${{ steps.config.outputs.framework }} | ${{ steps.diff.outputs.files_changed }} | +${{ steps.diff.outputs.additions }} / -${{ steps.diff.outputs.deletions }} |
+
           ---
- 
+
           ${REVIEW_CONTENT}
- 
+
           ---
           <sub>🤖 Review automatique par Claude | Workflow <code>claude-review</code> | <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Voir le run</a></sub>
           COMMENTEOF
           )
- 
+
           # Poster via l'API GitHub
           gh pr comment ${{ github.event.pull_request.number }} --body "$COMMENT"

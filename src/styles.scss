@@ -37,3 +37,19 @@ body {
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+:root {
+  --font-mono: 'Roboto Mono', ui-monospace, monospace;
+}
+
+.recruiter-dialog-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+
+  & .mat-mdc-dialog-container {
+    border-radius: 0;
+    height: 100vh;
+  }
+}
