@@ -2,7 +2,7 @@
 
 Application web Angular 21 de gestion de jeux de loterie (FDJ). Ce dépôt est la partie front d'un projet portfolio démontrant une architecture moderne : composants standalone, signals, NgRx Signal Store, SSR et authentification JWT.
 
-> 🔗 Backend associé : [lotofolio-back](https://github.com/deezek/loto-back) (Express + Prisma + PostgreSQL)
+> 🔗 Backend associé : [lotofolio-back](https://github.com/HostLabDeezek/lotofolio-back) (Express + Prisma + PostgreSQL)
 
 ---
 
@@ -26,8 +26,7 @@ Application web Angular 21 de gestion de jeux de loterie (FDJ). Ce dépôt est l
 
 | Environnement | URL                                                        | Statut       |
 |---------------|------------------------------------------------------------|--------------|
-| Production    | _à compléter_                                              | 🚧 à déployer |
-| Staging       | _à compléter_                                              | 🚧 à déployer |
+| Production    | https://lotofolio-front.vercel.app                         | ✅ en ligne   |
 | API Backend   | https://lotofolio-back.onrender.com/api                    | ✅ en ligne   |
 
 **Compte de démo** (recruteurs) :
@@ -219,13 +218,13 @@ Types TypeScript miroirs des entités backend.
 
 - **Node.js** ≥ 20
 - **npm** ≥ 10
-- Le **backend** doit tourner sur `http://localhost:3000` (voir [lotofolio-back](https://github.com/deezek/loto-back))
+- Le **backend** doit tourner sur `http://localhost:3000` (voir [lotofolio-back](https://github.com/HostLabDeezek/lotofolio-back))
 
 ### Étapes
 
 1. **Cloner le projet**
    ```bash
-   git clone https://github.com/deezek/loto-frontend.git
+   git clone https://github.com/HostLabDeezek/loto-frontend.git
    cd loto-frontend
    ```
 
@@ -331,7 +330,7 @@ Un bouton flottant `?` ouvre un dialogue avec les identifiants de démo et un pa
 
 ## Roadmap
 
-- [ ] Déployer sur Render / Vercel et renseigner les URL de démo
+- [x] Déployer sur Vercel — https://lotofolio-front.vercel.app
 - [ ] Ajouter une page d'inscription
 - [ ] Implémenter la génération de grilles aléatoires
 - [ ] Sauvegarder les grilles favorites côté backend
