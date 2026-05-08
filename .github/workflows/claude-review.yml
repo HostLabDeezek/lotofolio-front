@@ -147,52 +147,56 @@ jobs:
         id: review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LANGUAGE: ${{ steps.config.outputs.language }}
+          VERSION: ${{ steps.config.outputs.version }}
+          FRAMEWORK: ${{ steps.config.outputs.framework }}
+          STYLE_GUIDE: ${{ steps.config.outputs.style_guide }}
+          REVIEW_DEPTH: ${{ steps.config.outputs.review_depth }}
+          BRANCH_NAME: ${{ steps.branch.outputs.name }}
+          BRANCH_TARGET: ${{ steps.branch.outputs.target }}
+          BRANCH_TYPE: ${{ steps.branch.outputs.type }}
+          BRANCH_FOCUS: ${{ steps.branch.outputs.focus }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          FILES_CHANGED: ${{ steps.diff.outputs.files_changed }}
+          ADDITIONS: ${{ steps.diff.outputs.additions }}
+          DELETIONS: ${{ steps.diff.outputs.deletions }}
         run: |
-          DIFF_CONTENT=$(cat /tmp/pr_diff.txt)
-          CUSTOM_CONTENT=$(cat /tmp/custom_instructions.txt)
+          python3 << 'PYEOF'
+          import json, os, urllib.request, urllib.error
 
-          # Construire le prompt JSON-safe
-          cat > /tmp/review_request.json << 'JSONEOF'
-          {
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 4096,
-            "messages": [
-              {
-                "role": "user",
-                "content": "REVIEW_PLACEHOLDER"
-              }
-            ]
-          }
-          JSONEOF
+          with open('/tmp/pr_diff.txt') as f:
+              diff = f.read()
+          with open('/tmp/custom_instructions.txt') as f:
+              custom = f.read()
 
-          # Construire le prompt complet
-          PROMPT=$(cat <<PROMPTEOF
-          Tu es un expert en code review senior. Ton rôle est de relire cette Pull Request et de fournir un retour détaillé, pédagogique et bienveillant pour aider le développeur à progresser.
+          env = os.environ
+          prompt = f"""Tu es un expert en code review senior. Ton rôle est de relire cette Pull Request et de fournir un retour détaillé, pédagogique et bienveillant pour aider le développeur à progresser.
 
           ## Contexte du projet
-          - **Langage** : ${{ steps.config.outputs.language }} (version ${{ steps.config.outputs.version }})
-          - **Framework** : ${{ steps.config.outputs.framework }}
-          - **Style guide** : ${{ steps.config.outputs.style_guide }}
-          - **Profondeur de review** : ${{ steps.config.outputs.review_depth }}
+          - **Langage** : {env['LANGUAGE']} (version {env['VERSION']})
+          - **Framework** : {env['FRAMEWORK']}
+          - **Style guide** : {env['STYLE_GUIDE']}
+          - **Profondeur de review** : {env['REVIEW_DEPTH']}
 
           ## Contexte de la PR
-          - **Branche** : ${{ steps.branch.outputs.name }} → ${{ steps.branch.outputs.target }}
-          - **Type** : ${{ steps.branch.outputs.type }}
-          - **Focus** : ${{ steps.branch.outputs.focus }}
-          - **Titre** : ${{ github.event.pull_request.title }}
-          - **Description** : ${{ github.event.pull_request.body }}
-          - **Stats** : ${{ steps.diff.outputs.files_changed }} fichiers modifiés, +${{ steps.diff.outputs.additions }} / -${{ steps.diff.outputs.deletions }}
+          - **Branche** : {env['BRANCH_NAME']} → {env['BRANCH_TARGET']}
+          - **Type** : {env['BRANCH_TYPE']}
+          - **Focus** : {env['BRANCH_FOCUS']}
+          - **Titre** : {env['PR_TITLE']}
+          - **Description** : {env.get('PR_BODY', '') or '(aucune)'}
+          - **Stats** : {env['FILES_CHANGED']} fichiers modifiés, +{env['ADDITIONS']} / -{env['DELETIONS']}
 
           ## Instructions custom du projet
-          ${CUSTOM_CONTENT}
+          {custom}
 
           ## IMPORTANT — Règles de review
-          1. Base ta review sur les bonnes pratiques de **${{ steps.config.outputs.language }} ${{ steps.config.outputs.version }}** spécifiquement
+          1. Base ta review sur les bonnes pratiques de **{env['LANGUAGE']} {env['VERSION']}** spécifiquement
           2. Vérifie que les conventions de nommage du projet sont respectées
           3. Identifie les problèmes de sécurité, performance et maintenabilité
           4. Propose des alternatives concrètes avec des exemples de code quand tu suggères un changement
           5. Sois pédagogique : explique le "pourquoi" de chaque suggestion pour que le développeur apprenne
-          6. Adapte le niveau de détail au type de branche (${{ steps.branch.outputs.type }})
+          6. Adapte le niveau de détail au type de branche ({env['BRANCH_TYPE']})
 
           ## Format de réponse attendu
           Structure ta review ainsi :
@@ -230,56 +234,43 @@ jobs:
           ---
 
           ## Diff de la PR :
-          \`\`\`diff
-          ${DIFF_CONTENT}
-          \`\`\`
-          PROMPTEOF
+          ```diff
+          {diff}
+          ```
+          """
+
+          body = json.dumps({
+              "model": "claude-sonnet-4-6",
+              "max_tokens": 4096,
+              "messages": [{"role": "user", "content": prompt}],
+          }).encode()
+
+          req = urllib.request.Request(
+              "https://api.anthropic.com/v1/messages",
+              data=body,
+              headers={
+                  "content-type": "application/json",
+                  "x-api-key": env["ANTHROPIC_API_KEY"],
+                  "anthropic-version": "2023-06-01",
+              },
           )
-
-          # Créer un fichier temporaire avec toutes les variables
-          cat > /tmp/prompt_vars.json << EOF
-          {
-            "title": $(echo "${{ github.event.pull_request.title }}" | jq -R .),
-            "description": $(echo "${{ github.event.pull_request.body }}" | jq -Rs .),
-            "diff": $(cat /tmp/pr_diff.txt | jq -Rs .)
-          }
-          EOF
-
-          # Utiliser ces variables dans le prompt Python
-          python3 -c "
-          import json
-          with open('/tmp/prompt_vars.json', 'r') as f:
-              vars = json.load(f)
-          # Construire le prompt avec vars['title'], vars['description'], etc.
-          "
-
-          # Appeler l'API Claude
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST "https://api.anthropic.com/v1/messages" \
-            -H "Content-Type: application/json" \
-            -H "x-api-key: $ANTHROPIC_API_KEY" \
-            -H "anthropic-version: 2023-06-01" \
-            -d @/tmp/review_request.json)
-
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
-
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Erreur API Claude (HTTP $HTTP_CODE): $BODY"
-            echo "review_success=false" >> $GITHUB_OUTPUT
-            echo "Erreur lors de l'appel à Claude." > /tmp/review_comment.txt
-            exit 0
-          fi
-
-          # Extraire le texte de la réponse
-          REVIEW=$(echo "$BODY" | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          print(data['content'][0]['text'])
-          ")
-
-          echo "$REVIEW" > /tmp/review_comment.txt
-          echo "review_success=true" >> $GITHUB_OUTPUT
+          try:
+              with urllib.request.urlopen(req, timeout=120) as resp:
+                  data = json.load(resp)
+              review = data["content"][0]["text"]
+              with open('/tmp/review_comment.txt', 'w') as f:
+                  f.write(review)
+              print("✅ Review générée avec succès")
+          except urllib.error.HTTPError as e:
+              err_body = e.read().decode()
+              print(f"❌ Erreur API Claude (HTTP {e.code}): {err_body}")
+              with open('/tmp/review_comment.txt', 'w') as f:
+                  f.write(f"⚠️ Erreur lors de l'appel à Claude (HTTP {e.code}). Voir les logs du workflow.")
+          except Exception as e:
+              print(f"❌ Erreur inattendue : {e}")
+              with open('/tmp/review_comment.txt', 'w') as f:
+                  f.write(f"⚠️ Erreur inattendue lors de l'appel à Claude : {e}")
+          PYEOF
 
       # ---- 7. Poster le commentaire sur la PR ----
       - name: Post review comment on PR
