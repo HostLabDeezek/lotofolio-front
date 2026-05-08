@@ -49,6 +49,8 @@ jobs:
             echo "framework=$(yq e '.framework' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
             echo "style_guide=$(yq e '.style_guide' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
             echo "review_depth=$(yq e '.review_depth' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+            CLAUDE_MODEL=$(yq e '.claude_model // "claude-sonnet-4-6"' "$CONFIG_FILE")
+            echo "claude_model=$CLAUDE_MODEL" >> $GITHUB_OUTPUT
           else
             echo "config_found=false" >> $GITHUB_OUTPUT
             echo "language=unknown" >> $GITHUB_OUTPUT
@@ -56,6 +58,7 @@ jobs:
             echo "framework=none" >> $GITHUB_OUTPUT
             echo "style_guide=standard" >> $GITHUB_OUTPUT
             echo "review_depth=detailed" >> $GITHUB_OUTPUT
+            echo "claude_model=claude-sonnet-4-6" >> $GITHUB_OUTPUT
           fi
 
       # ---- 3. Détecter le type de branche (Git Flow) ----
@@ -161,23 +164,64 @@ jobs:
           FILES_CHANGED: ${{ steps.diff.outputs.files_changed }}
           ADDITIONS: ${{ steps.diff.outputs.additions }}
           DELETIONS: ${{ steps.diff.outputs.deletions }}
+          CLAUDE_MODEL: ${{ steps.config.outputs.claude_model }}
         run: |
           python3 << 'PYEOF'
           import json
           import os
+          import pathlib
+          import socket
+          import sys
+          import time
           import urllib.error
           import urllib.request
 
-          def set_output(key, value):
+          MAX_DIFF_CHARS = 80_000
+          MAX_RETRIES = 3
+          RETRYABLE_STATUS = (429, 529)
+
+          def set_output(key: str, value: str) -> None:
+              """Écrit un output GitHub Actions (gère le format heredoc multiligne)."""
               path = os.environ.get("GITHUB_OUTPUT")
-              if path:
-                  with open(path, 'a', encoding='utf-8') as out:
+              if not path:
+                  return
+              with open(path, 'a', encoding='utf-8') as out:
+                  if '\n' in value:
+                      out.write(f"{key}<<EOF_OUTPUT\n{value}\nEOF_OUTPUT\n")
+                  else:
                       out.write(f"{key}={value}\n")
+
+          def write_comment(text: str) -> None:
+              with open('/tmp/review_comment.txt', 'w', encoding='utf-8') as f:
+                  f.write(text)
+
+          def fail(msg: str, comment: str) -> None:
+              print(msg)
+              write_comment(comment)
+              set_output("review_success", "false")
+              sys.exit(0)  # exit 0 pour que l'étape 7 puisse poster le commentaire
+
+          # Vérifier que les fichiers temporaires existent (sinon une étape précédente a échoué)
+          for path_str in ('/tmp/pr_diff.txt', '/tmp/custom_instructions.txt'):
+              if not pathlib.Path(path_str).exists():
+                  fail(
+                      f"❌ Fichier {path_str} introuvable — une étape précédente a-t-elle échoué ?",
+                      f"⚠️ Fichier {path_str} manquant. Voir les logs du workflow.",
+                  )
 
           with open('/tmp/pr_diff.txt', encoding='utf-8', errors='replace') as f:
               diff = f.read()
           with open('/tmp/custom_instructions.txt', encoding='utf-8', errors='replace') as f:
               custom = f.read()
+
+          # Tronquer le diff pour ne pas dépasser la limite de tokens de l'API
+          if len(diff) > MAX_DIFF_CHARS:
+              original_size = len(diff)
+              diff = diff[:MAX_DIFF_CHARS] + (
+                  f"\n\n[... diff tronqué à {MAX_DIFF_CHARS} caractères "
+                  f"(taille originale : {original_size}) — concentre-toi sur les fichiers les plus critiques.]"
+              )
+              print(f"⚠️ Diff tronqué ({original_size} > {MAX_DIFF_CHARS} chars)")
 
           env = os.environ
           prompt = f"""Tu es un expert en code review senior. Ton rôle est de relire cette Pull Request et de fournir un retour détaillé, pédagogique et bienveillant pour aider le développeur à progresser.
@@ -249,7 +293,7 @@ jobs:
           """
 
           body = json.dumps({
-              "model": "claude-sonnet-4-6",
+              "model": env.get("CLAUDE_MODEL") or "claude-sonnet-4-6",
               "max_tokens": 4096,
               "messages": [{"role": "user", "content": prompt}],
           }).encode()
@@ -263,24 +307,47 @@ jobs:
                   "anthropic-version": "2023-06-01",
               },
           )
+
+          def call_api_with_retry():
+              """Appelle l'API avec retry exponentiel sur 429/529 (rate limit / overload)."""
+              for attempt in range(MAX_RETRIES):
+                  try:
+                      with urllib.request.urlopen(req, timeout=120) as resp:
+                          return json.load(resp)
+                  except urllib.error.HTTPError as e:
+                      if e.code in RETRYABLE_STATUS and attempt < MAX_RETRIES - 1:
+                          wait = 2 ** attempt * 5  # 5s, 10s, 20s
+                          print(f"⚠️ HTTP {e.code} (rate limit/overload), retry dans {wait}s...")
+                          time.sleep(wait)
+                          continue
+                      raise
+
           try:
-              with urllib.request.urlopen(req, timeout=120) as resp:
-                  data = json.load(resp)
+              data = call_api_with_retry()
               review = data["content"][0]["text"]
-              with open('/tmp/review_comment.txt', 'w', encoding='utf-8') as f:
-                  f.write(review)
+              write_comment(review)
               print("✅ Review générée avec succès")
               set_output("review_success", "true")
           except urllib.error.HTTPError as e:
-              err_body = e.read().decode()
+              err_body = e.read().decode(errors='replace')
               print(f"❌ Erreur API Claude (HTTP {e.code}): {err_body}")
-              with open('/tmp/review_comment.txt', 'w', encoding='utf-8') as f:
-                  f.write(f"⚠️ Erreur lors de l'appel à Claude (HTTP {e.code}). Voir les logs du workflow.")
+              write_comment(f"⚠️ Erreur lors de l'appel à Claude (HTTP {e.code}). Voir les logs du workflow.")
+              set_output("review_success", "false")
+          except urllib.error.URLError as e:
+              # Erreurs réseau / DNS / SSL — on logge la raison, jamais les headers
+              reason = str(e.reason) if hasattr(e, 'reason') else type(e).__name__
+              print(f"❌ Erreur réseau : {reason}")
+              write_comment("⚠️ Erreur réseau lors de l'appel à Claude. Voir les logs du workflow.")
+              set_output("review_success", "false")
+          except socket.timeout:
+              print("❌ Timeout après 120s — l'API Claude n'a pas répondu")
+              write_comment("⚠️ Timeout lors de l'appel à Claude (> 120s).")
               set_output("review_success", "false")
           except Exception as e:
-              print(f"❌ Erreur inattendue : {e}")
-              with open('/tmp/review_comment.txt', 'w', encoding='utf-8') as f:
-                  f.write(f"⚠️ Erreur inattendue lors de l'appel à Claude : {e}")
+              # On logge uniquement le type pour ne pas risquer de fuiter la clé API
+              # (le message d'exception peut contenir les headers de la requête)
+              print(f"❌ Erreur inattendue : {type(e).__name__}")
+              write_comment("⚠️ Erreur inattendue lors de l'appel à Claude. Voir les logs du workflow.")
               set_output("review_success", "false")
           PYEOF
 
