@@ -27,6 +27,9 @@ permissions:
 
 jobs:
   claude-review:
+    # Permet de désactiver la review pour une PR ponctuelle :
+    # ajouter "[skip-review]" dans le titre de la PR.
+    if: ${{ !contains(github.event.pull_request.title, '[skip-review]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -146,8 +149,13 @@ jobs:
           echo "$CUSTOM_INSTRUCTIONS" > /tmp/custom_instructions.txt
 
       # ---- 6. Construire le prompt et appeler Claude ----
+      # continue-on-error : on laisse l'étape 7 poster le commentaire même si
+      # l'appel API échoue (l'étape sera marquée "failed" dans le run, ce qui
+      # est correct — le workflow ne doit PAS apparaître vert si la review n'a
+      # pas pu être générée).
       - name: Call Claude API for review
         id: review
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LANGUAGE: ${{ steps.config.outputs.language }}
@@ -166,7 +174,7 @@ jobs:
           DELETIONS: ${{ steps.diff.outputs.deletions }}
           CLAUDE_MODEL: ${{ steps.config.outputs.claude_model }}
         run: |
-          python3 << 'PYEOF'
+          python3 << '__CLAUDE_REVIEW_SCRIPT_EOF__'
           import json
           import os
           import pathlib
@@ -176,9 +184,14 @@ jobs:
           import urllib.error
           import urllib.request
 
+          DEFAULT_MODEL = "claude-sonnet-4-6"
           MAX_DIFF_CHARS = 80_000
           MAX_RETRIES = 3
           RETRYABLE_STATUS = (429, 529)
+          API_URL = "https://api.anthropic.com/v1/messages"
+          # 120s couvre connect ET read (limitation urllib). L'API peut prendre
+          # jusqu'à ~90s pour les gros prompts, on laisse une marge.
+          API_TIMEOUT_SECONDS = 120
 
           def set_output(key: str, value: str) -> None:
               """Écrit un output GitHub Actions (gère le format heredoc multiligne)."""
@@ -196,10 +209,13 @@ jobs:
                   f.write(text)
 
           def fail(msg: str, comment: str) -> None:
+              # exit 1 : l'étape est marquée "failed" dans GitHub Actions.
+              # Grâce à continue-on-error, l'étape 7 (if: always()) postera
+              # quand même le commentaire d'erreur sur la PR.
               print(msg)
               write_comment(comment)
               set_output("review_success", "false")
-              sys.exit(0)  # exit 0 pour que l'étape 7 puisse poster le commentaire
+              sys.exit(1)
 
           # Vérifier que les fichiers temporaires existent (sinon une étape précédente a échoué)
           for path_str in ('/tmp/pr_diff.txt', '/tmp/custom_instructions.txt'):
@@ -209,10 +225,22 @@ jobs:
                       f"⚠️ Fichier {path_str} manquant. Voir les logs du workflow.",
                   )
 
-          with open('/tmp/pr_diff.txt', encoding='utf-8', errors='replace') as f:
-              diff = f.read()
-          with open('/tmp/custom_instructions.txt', encoding='utf-8', errors='replace') as f:
-              custom = f.read()
+          def read_text(path: str) -> str:
+              """Lit un fichier en UTF-8 strict, fallback latin-1 si encodage invalide.
+
+              Évite errors='replace' qui substituerait silencieusement les octets
+              invalides par U+FFFD (peut altérer le sens d'une ligne de code dans le diff).
+              """
+              try:
+                  with open(path, encoding='utf-8') as f:
+                      return f.read()
+              except UnicodeDecodeError:
+                  print(f"⚠️ {path} contient des caractères non-UTF-8, fallback en latin-1")
+                  with open(path, encoding='latin-1') as f:
+                      return f.read()
+
+          diff = read_text('/tmp/pr_diff.txt')
+          custom = read_text('/tmp/custom_instructions.txt')
 
           # Tronquer le diff pour ne pas dépasser la limite de tokens de l'API
           if len(diff) > MAX_DIFF_CHARS:
@@ -292,39 +320,74 @@ jobs:
           ```
           """
 
-          body = json.dumps({
-              "model": env.get("CLAUDE_MODEL") or "claude-sonnet-4-6",
-              "max_tokens": 4096,
-              "messages": [{"role": "user", "content": prompt}],
-          }).encode()
+          def build_request() -> urllib.request.Request:
+              """Construit la requête API en limitant la durée de vie de la clé.
 
-          req = urllib.request.Request(
-              "https://api.anthropic.com/v1/messages",
-              data=body,
-              headers={
+              Sécurité : la clé API n'est référencée que dans cette portée. Une fois
+              la Request construite, on supprime la variable locale. La Request
+              elle-même conserve une copie des headers — c'est inévitable —, mais
+              on évite toute autre référence dans le scope du script.
+              """
+              api_key = env["ANTHROPIC_API_KEY"]
+              body = json.dumps({
+                  "model": env.get("CLAUDE_MODEL") or DEFAULT_MODEL,
+                  "max_tokens": 4096,
+                  "messages": [{"role": "user", "content": prompt}],
+              }).encode()
+              headers = {
                   "content-type": "application/json",
-                  "x-api-key": env["ANTHROPIC_API_KEY"],
+                  "x-api-key": api_key,
                   "anthropic-version": "2023-06-01",
-              },
-          )
+              }
+              request = urllib.request.Request(API_URL, data=body, headers=headers)
+              del api_key, headers
+              return request
 
-          def call_api_with_retry():
-              """Appelle l'API avec retry exponentiel sur 429/529 (rate limit / overload)."""
-              for attempt in range(MAX_RETRIES):
+          def call_api_with_retry(req: urllib.request.Request, max_retries: int = MAX_RETRIES):
+              """Appelle l'API avec retry exponentiel sur 429/529 (rate limit / overload).
+
+              `req` est passé en paramètre (plutôt que capturé via closure) pour
+              améliorer la testabilité et clarifier la dépendance.
+              """
+              for attempt in range(max_retries):
                   try:
-                      with urllib.request.urlopen(req, timeout=120) as resp:
+                      with urllib.request.urlopen(req, timeout=API_TIMEOUT_SECONDS) as resp:
                           return json.load(resp)
                   except urllib.error.HTTPError as e:
-                      if e.code in RETRYABLE_STATUS and attempt < MAX_RETRIES - 1:
+                      if e.code in RETRYABLE_STATUS and attempt < max_retries - 1:
                           wait = 2 ** attempt * 5  # 5s, 10s, 20s
                           print(f"⚠️ HTTP {e.code} (rate limit/overload), retry dans {wait}s...")
                           time.sleep(wait)
-                          continue
-                      raise
+                      else:
+                          raise
+              # Garde-fou : ne devrait jamais être atteint car la dernière itération raise.
+              raise RuntimeError("Nombre maximum de retries atteint sans réponse")
+
+          def extract_review(data: dict) -> str:
+              """Valide la structure de la réponse Claude et retourne le texte.
+
+              L'API peut renvoyer un content vide (ex. stop_reason='max_tokens')
+              ou un format inattendu après évolution. On veut un message clair
+              plutôt qu'un KeyError silencieux capturé par le handler générique.
+              """
+              content = data.get("content")
+              if not isinstance(content, list) or not content or not isinstance(content[0], dict):
+                  fail(
+                      f"❌ Réponse API inattendue, clés reçues : {list(data.keys())}",
+                      "⚠️ Format de réponse Claude inattendu. Voir les logs du workflow.",
+                  )
+              text = content[0].get("text", "")
+              if not text:
+                  stop_reason = data.get("stop_reason", "inconnu")
+                  fail(
+                      f"❌ Champ 'text' vide. stop_reason={stop_reason}",
+                      f"⚠️ Claude n'a pas généré de texte (stop_reason : {stop_reason}).",
+                  )
+              return text
 
           try:
-              data = call_api_with_retry()
-              review = data["content"][0]["text"]
+              data = call_api_with_retry(build_request())
+              review = extract_review(data)
               write_comment(review)
               print("✅ Review générée avec succès")
               set_output("review_success", "true")
@@ -333,23 +396,28 @@ jobs:
               print(f"❌ Erreur API Claude (HTTP {e.code}): {err_body}")
               write_comment(f"⚠️ Erreur lors de l'appel à Claude (HTTP {e.code}). Voir les logs du workflow.")
               set_output("review_success", "false")
+              sys.exit(1)
           except urllib.error.URLError as e:
               # Erreurs réseau / DNS / SSL — on logge la raison, jamais les headers
               reason = str(e.reason) if hasattr(e, 'reason') else type(e).__name__
               print(f"❌ Erreur réseau : {reason}")
               write_comment("⚠️ Erreur réseau lors de l'appel à Claude. Voir les logs du workflow.")
               set_output("review_success", "false")
+              sys.exit(1)
           except socket.timeout:
-              print("❌ Timeout après 120s — l'API Claude n'a pas répondu")
-              write_comment("⚠️ Timeout lors de l'appel à Claude (> 120s).")
+              print(f"❌ Timeout après {API_TIMEOUT_SECONDS}s — l'API Claude n'a pas répondu")
+              write_comment(f"⚠️ Timeout lors de l'appel à Claude (> {API_TIMEOUT_SECONDS}s).")
               set_output("review_success", "false")
+              sys.exit(1)
           except Exception as e:
               # On logge uniquement le type pour ne pas risquer de fuiter la clé API
-              # (le message d'exception peut contenir les headers de la requête)
+              # (la repr d'une exception tierce pourrait potentiellement contenir
+              # l'objet Request et ses headers).
               print(f"❌ Erreur inattendue : {type(e).__name__}")
               write_comment("⚠️ Erreur inattendue lors de l'appel à Claude. Voir les logs du workflow.")
               set_output("review_success", "false")
-          PYEOF
+              sys.exit(1)
+          __CLAUDE_REVIEW_SCRIPT_EOF__
 
       # ---- 7. Poster le commentaire sur la PR ----
       - name: Post review comment on PR
