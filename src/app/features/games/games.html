@@ -1,0 +1,14 @@
+@if (jeuStore.loading()) {
+<div class="loading-state">
+  <div class="loading-spinner"></div>
+  <p class="loading-text">Chargement des jeux…</p>
+</div>
+} @else {
+<div class="page-header">
+  <h1 class="page-title">Nos jeux</h1>
+</div>
+
+@for (item of jeuStore.jeux(); track item.id; let i = $index) {
+<app-card [jeu]="item" [colorIndex]="i" />
+}
+}
