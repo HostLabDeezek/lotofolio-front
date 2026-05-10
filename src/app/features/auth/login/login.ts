@@ -37,7 +37,7 @@ export class Login {
     this.authService.login({ email, password }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/']);
+        this.router.navigate(['/jeux']);
       },
 
       error: (error: Error) => {

@@ -7,7 +7,6 @@ import {
 } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { RecruiterStep } from './recruiter-step';
 
@@ -26,7 +25,6 @@ interface DemoAccount {
     MatDialogActions,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatCardModule,
     RecruiterStep,
   ],
