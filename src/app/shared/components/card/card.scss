@@ -1,15 +1,13 @@
-<<<<<<< Updated upstream
+@use 'breakpoints' as bp;
+@use 'variables' as vars;
 $navy: #061B4A;
 $blue: #1557D4;
 $surface: #F2F4F8;
 $white: #ffffff;
 $text-dark: #0D1B3E;
 $text-muted: #6B7A99;
-=======
-@use 'breakpoints' as bp;
-@use 'variables' as vars;
->>>>>>> Stashed changes
 
+$surface: #F2F4F8;
 
 :host {
   display: block;
@@ -30,7 +28,7 @@ $text-muted: #6B7A99;
   font-family: 'Sora', sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
-  color: $text-dark;
+  color: vars.$text-dark;
   margin: 0 0 0.6rem;
   letter-spacing: -0.02em;
 
@@ -39,7 +37,7 @@ $text-muted: #6B7A99;
     display: block;
     width: 2rem;
     height: 3px;
-    background: $blue;
+    background: vars.$blue;
     margin-top: 0.6rem;
   }
 }
@@ -107,7 +105,6 @@ $text-muted: #6B7A99;
   }
 }
 
-<<<<<<< Updated upstream
 // Couleurs par index (data-index="0..5")
 .jeu-card[data-index="0"] .jeu-card__visual { background: linear-gradient(135deg, #1A3A8F 0%, #0D2460 100%); }
 .jeu-card[data-index="1"] .jeu-card__visual { background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%); }
@@ -115,14 +112,12 @@ $text-muted: #6B7A99;
 .jeu-card[data-index="3"] .jeu-card__visual { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
 .jeu-card[data-index="4"] .jeu-card__visual { background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%); }
 .jeu-card[data-index="5"] .jeu-card__visual { background: linear-gradient(135deg, #3730A3 0%, #2D27A0 100%); }
-=======
 .jeu-card[data-index='0'] .jeu-card__visual { background: linear-gradient(135deg, #1A3A8F 0%, #0D2460 100%); }
 .jeu-card[data-index='1'] .jeu-card__visual { background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%); }
 .jeu-card[data-index='2'] .jeu-card__visual { background: linear-gradient(135deg, #1557D4 0%, #0A3DAA 100%); }
 .jeu-card[data-index='3'] .jeu-card__visual { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
 .jeu-card[data-index='4'] .jeu-card__visual { background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%); }
 .jeu-card[data-index='5'] .jeu-card__visual { background: linear-gradient(135deg, #3730A3 0%, #2D27A0 100%); }
->>>>>>> Stashed changes
 
 .jeu-card__game-name {
   font-family: 'Sora', sans-serif;
@@ -201,8 +196,8 @@ $text-muted: #6B7A99;
 .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba($blue, 0.15);
-  border-top-color: $blue;
+  border: 3px solid rgba(vars.$blue, 0.15);
+  border-top-color: vars.$blue;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -210,7 +205,7 @@ $text-muted: #6B7A99;
 .loading-text {
   font-family: 'Sora', sans-serif;
   font-size: 0.875rem;
-  color: $text-muted;
+  color: vars.$text-muted;
   margin: 0;
 }
 
