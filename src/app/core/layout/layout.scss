@@ -1,7 +1,13 @@
 $navy: #061B4A;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
 .main-content {
-  min-height: calc(100vh - 64px - 52px);
+  flex: 1;
   background: #F0F4FA;
 }
 
@@ -14,7 +20,5 @@ $navy: #061B4A;
   font-size: 0.78rem;
   letter-spacing: 0.04em;
 
-  p {
-    margin: 0;
-  }
+  p { margin: 0; }
 }

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 // ── Palette Loto FDJ ──────────────────────────
 $loto-sky:    #5ec9ea;
 $loto-blue:   #4ab8e0;
@@ -11,7 +13,7 @@ $text-muted:  #5a7a96;
 
 // ── Container ─────────────────────────────────
 .login-container {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -240,4 +242,28 @@ button[type='submit'] {
       text-decoration: underline;
     }
   }
+}
+
+// ── Mobile Responsive ─────────────────────────
+@include bp.mobile {
+  .login-container {
+    padding-top: 2rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    overflow: hidden;
+
+    &::before,
+    &::after { display: none; }
+  }
+  .app-title { margin-bottom: 1.5rem; }
+  .app-title h1 { font-size: 1.8rem; letter-spacing: 0.1rem; }
+  .app-title p {
+    font-size: 0.65rem;
+    letter-spacing: 0.2rem;
+    margin-top: 1rem;
+  }
+  .app-logo { height: 42px; }
+  .login-card { padding: 2rem 1.25rem; }
+  .login-card h1 { font-size: 1.35rem; }
+  .login-card p { font-size: 0.8rem; }
 }

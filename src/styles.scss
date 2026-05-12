@@ -43,13 +43,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .recruiter-dialog-fullscreen {
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-
-  & .mat-mdc-dialog-container {
+  & .mat-mdc-dialog-container,
+  & .mdc-dialog__container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     border-radius: 0;
-    height: 100vh;
+  }
+
+  & .mat-mdc-dialog-surface {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+  }
+
+  & .mat-mdc-dialog-content {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }

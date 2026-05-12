@@ -1,6 +1,12 @@
-<!-- src/app/core/layout/header/header.component.html -->
 <header class="header">
   <div class="container">
+    <!-- Hamburger (visible uniquement en mobile via CSS) -->
+    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <!-- Logo -->
     <div class="logo">
       <a routerLink="/">
@@ -9,24 +15,13 @@
       </a>
     </div>
 
-    <!-- Navigation -->
+    <!-- Navigation desktop -->
     <nav class="nav">
-      <!-- Liens publics -->
-      <a routerLink="/jeux" routerLinkActive="active">
-        Jeux
-      </a>
-      <a routerLink="/tirages" routerLinkActive="active">
-        Tirages
-      </a>
-
-      <!-- Liens authentifiés -->
+      <a routerLink="/jeux" routerLinkActive="active">Jeux</a>
+      <a routerLink="/tirages" routerLinkActive="active">Tirages</a>
       @if (authService.isLoggedIn()) {
-        <a routerLink="/grilles" routerLinkActive="active">
-          Mes Grilles
-        </a>
-        <a routerLink="/resultats" routerLinkActive="active">
-          Résultats
-        </a>
+        <a routerLink="/grilles" routerLinkActive="active">Mes Grilles</a>
+        <a routerLink="/resultats" routerLinkActive="active">Résultats</a>
       }
     </nav>
 
@@ -34,23 +29,27 @@
     <div class="user-menu">
       @if (authService.isLoggedIn()) {
         <div class="user-info">
-          <span class="username">
-            👤 {{ authService.user()?.name }}
-          </span>
-          <button class="btn-logout" (click)="logout()">
-            Déconnexion
-          </button>
+          <span class="username">👤 {{ authService.user()?.name }}</span>
+          <button class="btn-logout" (click)="logout()">Déconnexion</button>
         </div>
       } @else {
         <div class="auth-buttons">
-          <a routerLink="/login" class="btn btn-outline">
-            Connexion
-          </a>
-          <a routerLink="/register" class="btn btn-primary">
-            Inscription
-          </a>
+          <a routerLink="/login" class="btn btn-outline">Connexion</a>
+          <a routerLink="/register" class="btn btn-primary">Inscription</a>
         </div>
       }
     </div>
   </div>
+
+  <!-- Navigation mobile (dropdown) -->
+  @if (menuOpen()) {
+    <nav class="mobile-nav">
+      <a routerLink="/jeux" routerLinkActive="active" (click)="closeMenu()">Jeux</a>
+      <a routerLink="/tirages" routerLinkActive="active" (click)="closeMenu()">Tirages</a>
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/grilles" routerLinkActive="active" (click)="closeMenu()">Mes Grilles</a>
+        <a routerLink="/resultats" routerLinkActive="active" (click)="closeMenu()">Résultats</a>
+      }
+    </nav>
+  }
 </header>

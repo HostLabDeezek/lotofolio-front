@@ -1,6 +1,11 @@
+@use 'breakpoints' as bp;
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 
 $navy: #061B4A;
+
+:host {
+  display: block;
+}
 $blue: #1557D4;
 $blue-hover: #3B7EF6;
 $gold: #F5A623;
@@ -26,6 +31,27 @@ $white: #ffffff;
   gap: 2rem;
 }
 
+// Hamburger — caché sur desktop, visible en mobile via media query
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  flex-shrink: 0;
+
+  span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: $white;
+    border-radius: 2px;
+  }
+}
+
 .logo a {
   font-family: 'Sora', sans-serif;
   font-size: 1.35rem;
@@ -37,9 +63,7 @@ $white: #ffffff;
   align-items: center;
   gap: 0.6rem;
 
-  &:hover {
-    color: rgba($white, 0.85);
-  }
+  &:hover { color: rgba($white, 0.85); }
 }
 
 .logo-img {
@@ -81,22 +105,8 @@ $white: #ffffff;
     transition: transform 0.2s ease;
   }
 
-  &:hover {
-    color: $white;
-
-    &::after {
-      transform: scaleX(1);
-    }
-  }
-
-  &.active {
-    color: $white;
-    font-weight: 600;
-
-    &::after {
-      transform: scaleX(1);
-    }
-  }
+  &:hover { color: $white; &::after { transform: scaleX(1); } }
+  &.active { color: $white; font-weight: 600; &::after { transform: scaleX(1); } }
 }
 
 .user-menu {
@@ -160,21 +170,49 @@ $white: #ffffff;
 .btn-outline {
   color: rgba($white, 0.75);
   border: 1.5px solid rgba($white, 0.25);
-
-  &:hover {
-    color: $white;
-    border-color: rgba($white, 0.55);
-    background: rgba($white, 0.07);
-  }
+  &:hover { color: $white; border-color: rgba($white, 0.55); background: rgba($white, 0.07); }
 }
 
 .btn-primary {
   background: $blue;
   color: $white;
   border: 1.5px solid $blue;
+  &:hover { background: $blue-hover; border-color: $blue-hover; }
+}
 
-  &:hover {
-    background: $blue-hover;
-    border-color: $blue-hover;
+// Menu mobile dropdown (affiché sous le header quand menuOpen = true)
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  background: $navy;
+  border-top: 1px solid rgba($white, 0.1);
+
+  a {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba($white, 0.8);
+    text-decoration: none;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid rgba($white, 0.06);
+    transition: color 0.15s ease, background 0.15s ease;
+
+    &:last-child { border-bottom: none; }
+    &:hover, &.active { color: $white; background: rgba($white, 0.05); }
   }
+}
+
+// ── Responsive ────────────────────────────────
+
+@include bp.tablet {
+  .hamburger { display: flex; }
+  .nav { display: none; }
+  .container { padding: 0 1rem; gap: 0.75rem; }
+  .username { display: none; }
+}
+
+@include bp.mobile {
+  .btn { font-size: 0.7rem; padding: 0.35rem 0.75rem; }
+  .logo a { font-size: 1.05rem; gap: 0.4rem; }
+  .logo-img { height: 26px; }
 }

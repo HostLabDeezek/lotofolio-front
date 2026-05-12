@@ -1,56 +1,14 @@
+@use 'breakpoints' as bp;
+
 $navy: #061B4A;
 $blue: #1557D4;
-$surface: #F2F4F8;
 $white: #ffffff;
 $text-dark: #0D1B3E;
 $text-muted: #6B7A99;
 
-
 :host {
   display: block;
-  padding: 1.5rem 0 4rem;
-  background: $surface;
-  min-height: 100%;
 }
-
-// En-tête
-
-.page-header {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 1.25rem 1.5rem;
-}
-
-.page-title {
-  font-family: 'Sora', sans-serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: $text-dark;
-  margin: 0 0 0.6rem;
-  letter-spacing: -0.02em;
-
-  &::after {
-    content: '';
-    display: block;
-    width: 2rem;
-    height: 3px;
-    background: $blue;
-    margin-top: 0.6rem;
-  }
-}
-
-// Grille 2 colonnes
-
-.jeux-grid {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 1.25rem;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-// Card
 
 .jeu-card {
   background: $white;
@@ -68,8 +26,6 @@ $text-muted: #6B7A99;
   }
 }
 
-// Zone visuelle colorée (top ~55% de la card)
-
 .jeu-card__visual {
   position: relative;
   height: 130px;
@@ -78,7 +34,6 @@ $text-muted: #6B7A99;
   padding: 1rem;
   overflow: hidden;
 
-  // Effet de profondeur avec cercle décoratif
   &::before {
     content: '';
     position: absolute;
@@ -102,7 +57,6 @@ $text-muted: #6B7A99;
   }
 }
 
-// Couleurs par index (data-index="0..5")
 .jeu-card[data-index="0"] .jeu-card__visual { background: linear-gradient(135deg, #1A3A8F 0%, #0D2460 100%); }
 .jeu-card[data-index="1"] .jeu-card__visual { background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%); }
 .jeu-card[data-index="2"] .jeu-card__visual { background: linear-gradient(135deg, #1557D4 0%, #0A3DAA 100%); }
@@ -123,8 +77,6 @@ $text-muted: #6B7A99;
   text-transform: uppercase;
 }
 
-// Badge coin haut-droit
-
 .jeu-card__badge {
   position: absolute;
   top: 0.75rem;
@@ -140,8 +92,6 @@ $text-muted: #6B7A99;
   z-index: 2;
   white-space: nowrap;
 }
-
-// Bloc d'info (bas de carte)
 
 .jeu-card__info {
   padding: 0.9rem 1rem 1rem;
@@ -173,33 +123,8 @@ $text-muted: #6B7A99;
   margin: 0;
 }
 
-// Loading state
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6rem 2rem;
-  gap: 1.25rem;
-}
-
-.loading-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba($blue, 0.15);
-  border-top-color: $blue;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-.loading-text {
-  font-family: 'Sora', sans-serif;
-  font-size: 0.875rem;
-  color: $text-muted;
-  margin: 0;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@include bp.mobile {
+  .jeu-card__visual { height: 100px; }
+  .jeu-card__info { padding: 0.65rem 0.75rem 0.75rem; }
+  .jeu-card__game-name { font-size: 0.875rem; }
 }

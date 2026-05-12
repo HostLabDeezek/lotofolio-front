@@ -23,6 +23,9 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": ["src/styles"]
+            },
             "assets": [
               {
                 "glob": "**/*",
@@ -81,6 +84,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": ["localhost"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "loto-frontend:build:production"
@@ -106,6 +112,9 @@
             ],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": ["src/styles"]
+            },
             "assets": [
               {
                 "glob": "**/*",

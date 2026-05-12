@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Auth } from '../services/auth';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -10,11 +10,19 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './header.scss',
 })
 export class HeaderComponent {
-
   readonly authService = inject(Auth);
   readonly router = inject(Router);
+  readonly menuOpen = signal(false);
 
-  logout() {
+  toggleMenu(): void {
+    this.menuOpen.update(v => !v);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
   }

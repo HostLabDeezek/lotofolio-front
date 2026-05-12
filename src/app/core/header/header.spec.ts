@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { HeaderComponent } from './header';
+import { provideRouter } from '@angular/router';
 
 describe('Header', () => {
   let component: HeaderComponent;
@@ -8,9 +8,9 @@ describe('Header', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HeaderComponent]
-    })
-    .compileComponents();
+      imports: [HeaderComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(HeaderComponent);
     component = fixture.componentInstance;
@@ -19,5 +19,26 @@ describe('Header', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('menuOpen starts false', () => {
+    expect(component.menuOpen()).toBeFalse();
+  });
+
+  it('toggleMenu flips menuOpen to true', () => {
+    component.toggleMenu();
+    expect(component.menuOpen()).toBeTrue();
+  });
+
+  it('toggleMenu flips menuOpen back to false', () => {
+    component.toggleMenu();
+    component.toggleMenu();
+    expect(component.menuOpen()).toBeFalse();
+  });
+
+  it('closeMenu sets menuOpen to false', () => {
+    component.toggleMenu();
+    component.closeMenu();
+    expect(component.menuOpen()).toBeFalse();
   });
 });

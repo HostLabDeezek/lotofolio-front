@@ -24,7 +24,11 @@ export class RecruiterGuideFab {
     this.dialog.open(RecruiterGuideDialog, {
       maxWidth: isXSmall ? '100vw' : '900px',
       width: '100%',
-      ...(isXSmall && { panelClass: 'recruiter-dialog-fullscreen' }),
+      ...(isXSmall && {
+        height: '100dvh',
+        maxHeight: '100dvh',
+        panelClass: 'recruiter-dialog-fullscreen',
+      }),
       autoFocus: 'dialog',
       restoreFocus: true,
     });
