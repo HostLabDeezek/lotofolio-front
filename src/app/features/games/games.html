@@ -12,7 +12,9 @@
   <h1 class="page-title">Nos jeux</h1>
 </div>
 
-@for (item of jeuStore.jeux(); track item.id; let i = $index) {
-<app-card [jeu]="item" [colorIndex]="i" />
-}
+<div class="jeux-grid">
+  @for (item of jeuStore.jeux(); track item.id; let i = $index) {
+    <app-card [jeu]="item" [colorIndex]="i" />
+  }
+</div>
 }

@@ -1,20 +1,9 @@
-<<<<<<< Updated upstream
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
-
-$navy: #061B4A;
-$blue: #1557D4;
-$blue-hover: #3B7EF6;
-$gold: #F5A623;
-$white: #ffffff;
-=======
 @use 'breakpoints' as bp;
 @use 'variables' as vars;
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 
 :host {
   display: block;
 }
->>>>>>> Stashed changes
 
 .header {
   background-color: vars.$navy;
@@ -36,8 +25,6 @@ $white: #ffffff;
   gap: 2rem;
 }
 
-<<<<<<< Updated upstream
-=======
 // Hamburger — caché sur desktop, visible en mobile via media query
 .hamburger {
   display: none;
@@ -59,7 +46,6 @@ $white: #ffffff;
   }
 }
 
->>>>>>> Stashed changes
 .logo a {
   font-family: 'Sora', sans-serif;
   font-size: 1.35rem;
@@ -72,11 +58,7 @@ $white: #ffffff;
   gap: 0.6rem;
 
   &:hover {
-<<<<<<< Updated upstream
-    color: rgba($white, 0.85);
-=======
     color: rgba(vars.$white, 0.85);
->>>>>>> Stashed changes
   }
 }
 
@@ -120,27 +102,14 @@ $white: #ffffff;
   }
 
   &:hover {
-<<<<<<< Updated upstream
-    color: $white;
-
-=======
     color: vars.$white;
->>>>>>> Stashed changes
     &::after {
       transform: scaleX(1);
     }
   }
-<<<<<<< Updated upstream
-
-  &.active {
-    color: $white;
-    font-weight: 600;
-
-=======
   &.active {
     color: vars.$white;
     font-weight: 600;
->>>>>>> Stashed changes
     &::after {
       transform: scaleX(1);
     }
@@ -206,15 +175,6 @@ $white: #ffffff;
 }
 
 .btn-outline {
-<<<<<<< Updated upstream
-  color: rgba($white, 0.75);
-  border: 1.5px solid rgba($white, 0.25);
-
-  &:hover {
-    color: $white;
-    border-color: rgba($white, 0.55);
-    background: rgba($white, 0.07);
-=======
   color: rgba(vars.$white, 0.75);
   border: 1.5px solid rgba(vars.$white, 0.25);
 
@@ -222,22 +182,10 @@ $white: #ffffff;
     color: vars.$white;
     border-color: rgba(vars.$white, 0.55);
     background: rgba(vars.$white, 0.07);
->>>>>>> Stashed changes
   }
 }
 
 .btn-primary {
-<<<<<<< Updated upstream
-  background: $blue;
-  color: $white;
-  border: 1.5px solid $blue;
-
-  &:hover {
-    background: $blue-hover;
-    border-color: $blue-hover;
-  }
-}
-=======
   background: vars.$blue;
   color: vars.$white;
   border: 1.5px solid vars.$blue;
@@ -307,4 +255,3 @@ $white: #ffffff;
     height: 26px;
   }
 }
->>>>>>> Stashed changes

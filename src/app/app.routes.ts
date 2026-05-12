@@ -1,18 +1,15 @@
 import { Routes } from '@angular/router';
-import { Login } from './features/auth/login/login';
-import { Games } from './features/games/games';
-import { Layout } from './core/layout/layout';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'login', component: Login },
+  { path: 'login', loadComponent: () => import('./features/auth/login/login').then(m => m.Login) },
   {
     path: '',
-    component: Layout,
+    loadComponent: () => import('./core/layout/layout').then(m => m.Layout),
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'jeux', pathMatch: 'full' },
-      { path: 'jeux', component: Games },
+      { path: 'jeux', loadComponent: () => import('./features/games/games').then(m => m.Games) },
     ],
   },
   { path: '**', redirectTo: '/jeux' },
