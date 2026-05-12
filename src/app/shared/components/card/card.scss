@@ -1,5 +1,11 @@
 @use 'breakpoints' as bp;
 @use 'variables' as vars;
+$navy: #061B4A;
+$blue: #1557D4;
+$surface: #F2F4F8;
+$white: #ffffff;
+$text-dark: #0D1B3E;
+$text-muted: #6B7A99;
 
 $surface: #F2F4F8;
 
@@ -99,6 +105,13 @@ $surface: #F2F4F8;
   }
 }
 
+// Couleurs par index (data-index="0..5")
+.jeu-card[data-index="0"] .jeu-card__visual { background: linear-gradient(135deg, #1A3A8F 0%, #0D2460 100%); }
+.jeu-card[data-index="1"] .jeu-card__visual { background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%); }
+.jeu-card[data-index="2"] .jeu-card__visual { background: linear-gradient(135deg, #1557D4 0%, #0A3DAA 100%); }
+.jeu-card[data-index="3"] .jeu-card__visual { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
+.jeu-card[data-index="4"] .jeu-card__visual { background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%); }
+.jeu-card[data-index="5"] .jeu-card__visual { background: linear-gradient(135deg, #3730A3 0%, #2D27A0 100%); }
 .jeu-card[data-index='0'] .jeu-card__visual { background: linear-gradient(135deg, #1A3A8F 0%, #0D2460 100%); }
 .jeu-card[data-index='1'] .jeu-card__visual { background: linear-gradient(135deg, #0077B6 0%, #023E8A 100%); }
 .jeu-card[data-index='2'] .jeu-card__visual { background: linear-gradient(135deg, #1557D4 0%, #0A3DAA 100%); }
