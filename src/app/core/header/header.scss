@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 
 $navy: #061B4A;
@@ -5,14 +6,23 @@ $blue: #1557D4;
 $blue-hover: #3B7EF6;
 $gold: #F5A623;
 $white: #ffffff;
+=======
+@use 'breakpoints' as bp;
+@use 'variables' as vars;
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+:host {
+  display: block;
+}
+>>>>>>> Stashed changes
 
 .header {
-  background-color: $navy;
-  border-bottom: 3px solid $blue;
+  background-color: vars.$navy;
+  border-bottom: 3px solid vars.$blue;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 24px rgba(6, 27, 74, 0.5);
+  box-shadow: 0 4px 24px rgba(vars.$navy, 0.5);
 }
 
 .container {
@@ -26,11 +36,35 @@ $white: #ffffff;
   gap: 2rem;
 }
 
+<<<<<<< Updated upstream
+=======
+// Hamburger — caché sur desktop, visible en mobile via media query
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  flex-shrink: 0;
+
+  span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: vars.$white;
+    border-radius: 2px;
+  }
+}
+
+>>>>>>> Stashed changes
 .logo a {
   font-family: 'Sora', sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
-  color: $white;
+  color: vars.$white;
   text-decoration: none;
   letter-spacing: -0.02em;
   display: flex;
@@ -38,7 +72,11 @@ $white: #ffffff;
   gap: 0.6rem;
 
   &:hover {
+<<<<<<< Updated upstream
     color: rgba($white, 0.85);
+=======
+    color: rgba(vars.$white, 0.85);
+>>>>>>> Stashed changes
   }
 }
 
@@ -61,7 +99,7 @@ $white: #ffffff;
   font-family: 'Sora', sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgba($white, 0.65);
+  color: rgba(vars.$white, 0.65);
   text-decoration: none;
   padding: 0.5rem 1rem;
   letter-spacing: 0.03em;
@@ -75,24 +113,34 @@ $white: #ffffff;
     left: 1rem;
     right: 1rem;
     height: 2px;
-    background: $gold;
+    background: vars.$gold;
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.2s ease;
   }
 
   &:hover {
+<<<<<<< Updated upstream
     color: $white;
 
+=======
+    color: vars.$white;
+>>>>>>> Stashed changes
     &::after {
       transform: scaleX(1);
     }
   }
+<<<<<<< Updated upstream
 
   &.active {
     color: $white;
     font-weight: 600;
 
+=======
+  &.active {
+    color: vars.$white;
+    font-weight: 600;
+>>>>>>> Stashed changes
     &::after {
       transform: scaleX(1);
     }
@@ -115,7 +163,7 @@ $white: #ffffff;
   font-family: 'Sora', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba($white, 0.9);
+  color: rgba(vars.$white, 0.9);
   letter-spacing: 0.02em;
 }
 
@@ -125,17 +173,17 @@ $white: #ffffff;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba($white, 0.7);
+  color: rgba(vars.$white, 0.7);
   background: transparent;
-  border: 1.5px solid rgba($white, 0.25);
+  border: 1.5px solid rgba(vars.$white, 0.25);
   padding: 0.4rem 1rem;
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    color: $white;
-    border-color: rgba($white, 0.55);
-    background: rgba($white, 0.07);
+    color: vars.$white;
+    border-color: rgba(vars.$white, 0.55);
+    background: rgba(vars.$white, 0.07);
   }
 }
 
@@ -158,6 +206,7 @@ $white: #ffffff;
 }
 
 .btn-outline {
+<<<<<<< Updated upstream
   color: rgba($white, 0.75);
   border: 1.5px solid rgba($white, 0.25);
 
@@ -165,10 +214,20 @@ $white: #ffffff;
     color: $white;
     border-color: rgba($white, 0.55);
     background: rgba($white, 0.07);
+=======
+  color: rgba(vars.$white, 0.75);
+  border: 1.5px solid rgba(vars.$white, 0.25);
+
+  &:hover {
+    color: vars.$white;
+    border-color: rgba(vars.$white, 0.55);
+    background: rgba(vars.$white, 0.07);
+>>>>>>> Stashed changes
   }
 }
 
 .btn-primary {
+<<<<<<< Updated upstream
   background: $blue;
   color: $white;
   border: 1.5px solid $blue;
@@ -178,3 +237,74 @@ $white: #ffffff;
     border-color: $blue-hover;
   }
 }
+=======
+  background: vars.$blue;
+  color: vars.$white;
+  border: 1.5px solid vars.$blue;
+
+  &:hover {
+    background: vars.$blue-hover;
+    border-color: vars.$blue-hover;
+  }
+}
+
+// Menu mobile dropdown (affiché sous le header quand menuOpen = true)
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  background: vars.$navy;
+  border-top: 1px solid rgba(vars.$white, 0.1);
+
+  a {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(vars.$white, 0.8);
+    text-decoration: none;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid rgba(vars.$white, 0.06);
+    transition: color 0.15s ease, background 0.15s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover,
+    &.active {
+      color: vars.$white;
+      background: rgba(vars.$white, 0.05);
+    }
+  }
+}
+
+// ── Responsive ────────────────────────────────
+
+@include bp.tablet {
+  .hamburger {
+    display: flex;
+  }
+  .nav {
+    display: none;
+  }
+  .container {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+  .username {
+    display: none;
+  }
+}
+
+@include bp.mobile {
+  .btn {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.75rem;
+  }
+  .logo a {
+    font-size: 1.05rem;
+    gap: 0.4rem;
+  }
+  .logo-img {
+    height: 26px;
+  }
+}
+>>>>>>> Stashed changes

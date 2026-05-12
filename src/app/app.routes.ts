@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { Login } from './features/auth/login/login';
-import { HomePage } from './home-page/home-page';
+import { Games } from './features/games/games';
 import { Layout } from './core/layout/layout';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -11,8 +11,9 @@ export const routes: Routes = [
     component: Layout,
     canActivate: [authGuard],
     children: [
-      { path: '', component: HomePage },
+      { path: '', redirectTo: 'jeux', pathMatch: 'full' },
+      { path: 'jeux', component: Games },
     ],
   },
-  { path: '**', redirectTo: '' },
+  { path: '**', redirectTo: '/jeux' },
 ];

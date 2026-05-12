@@ -1,9 +1,12 @@
+<<<<<<< Updated upstream
 $navy: #061B4A;
 $blue: #1557D4;
+=======
+@use 'breakpoints' as bp;
+@use 'variables' as vars;
+
+>>>>>>> Stashed changes
 $surface: #F2F4F8;
-$white: #ffffff;
-$text-dark: #0D1B3E;
-$text-muted: #6B7A99;
 
 
 :host {
@@ -25,7 +28,7 @@ $text-muted: #6B7A99;
   font-family: 'Sora', sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
-  color: $text-dark;
+  color: vars.$text-dark;
   margin: 0 0 0.6rem;
   letter-spacing: -0.02em;
 
@@ -34,7 +37,7 @@ $text-muted: #6B7A99;
     display: block;
     width: 2rem;
     height: 3px;
-    background: $blue;
+    background: vars.$blue;
     margin-top: 0.6rem;
   }
 }
@@ -187,8 +190,8 @@ $text-muted: #6B7A99;
 .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba($blue, 0.15);
-  border-top-color: $blue;
+  border: 3px solid rgba(vars.$blue, 0.15);
+  border-top-color: vars.$blue;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -196,7 +199,21 @@ $text-muted: #6B7A99;
 .loading-text {
   font-family: 'Sora', sans-serif;
   font-size: 0.875rem;
-  color: $text-muted;
+  color: vars.$text-muted;
+  margin: 0;
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+}
+
+.error-text {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  color: vars.$text-muted;
   margin: 0;
 }
 

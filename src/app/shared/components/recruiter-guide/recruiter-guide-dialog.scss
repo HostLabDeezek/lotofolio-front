@@ -97,6 +97,17 @@
   font-weight: 700;
 }
 
+.password-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background-color: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+  user-select: text;
+}
+
 .section-title {
   font: var(--mat-sys-title-medium);
   font-weight: 700;
