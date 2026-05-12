@@ -3,6 +3,10 @@
   <div class="loading-spinner"></div>
   <p class="loading-text">Chargement des jeux…</p>
 </div>
+} @else if (jeuStore.error()) {
+<div class="error-state">
+  <p class="error-text">{{ jeuStore.error() }}</p>
+</div>
 } @else {
 <div class="page-header">
   <h1 class="page-title">Nos jeux</h1>

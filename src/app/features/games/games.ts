@@ -9,6 +9,5 @@ import { JeuStore } from '../../shared/stores/jeu.store';
   styleUrl: './games.scss',
 })
 export class Games {
-  jeuStore = inject(JeuStore);
-  
+  protected readonly jeuStore = inject(JeuStore);
 }
