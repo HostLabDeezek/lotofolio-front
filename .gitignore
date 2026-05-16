@@ -41,9 +41,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
-<<<<<<< Updated upstream
-=======
 
 # Documentation CSS responsive (locale)
 /docs
->>>>>>> Stashed changes
