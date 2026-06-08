@@ -63,11 +63,18 @@ $surface: #F2F4F8;
   display: flex;
   flex-direction: column;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 28px rgba(vars.$navy, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 2px;
   }
 }
 

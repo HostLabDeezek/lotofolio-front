@@ -1,0 +1,76 @@
+@if (loading()) {
+<div class="state state--loading">
+  <div class="state__spinner"></div>
+  <p class="state__text">Chargement de la grille…</p>
+</div>
+} @else if (error()) {
+<div class="state state--error">
+  <p class="state__text">{{ error() }}</p>
+</div>
+} @else if (jeu(); as jeu) {
+<section class="grille">
+  <header class="grille__header">
+    <h1 class="grille__title">{{ jeu.nom }}</h1>
+    @if (jeu.description) {
+    <p class="grille__description">{{ jeu.description }}</p>
+    }
+    @if (jeu.regle) {
+    <p class="grille__regle">{{ jeu.regle }}</p>
+    }
+
+    @if (tirageLabel(); as label) {
+    <p class="grille__tirage">{{ label }}</p>
+    } @else {
+    <p class="grille__tirage grille__tirage--none">
+      Aucun tirage disponible actuellement, revenez plus tard.
+    </p>
+    }
+  </header>
+
+  <div class="grille__board" [class.grille__board--disabled]="disabled()">
+    <section class="zone">
+      <h2 class="zone__title">Numéros</h2>
+      <div class="zone__grid">
+        @for (n of numeros(); track n) {
+        <button
+          type="button"
+          class="num"
+          [class.num--selected]="isNumeroSelected(n)"
+          [class.num--off]="isNumeroDisabled(n) && !isNumeroSelected(n)"
+          [disabled]="isNumeroDisabled(n)"
+          [attr.aria-pressed]="isNumeroSelected(n)"
+          (click)="toggleNumero(n)"
+        >
+          {{ n }}
+        </button>
+        }
+      </div>
+    </section>
+
+    @if (jeu.nbNumeroChanceATirer > 0) {
+    <section class="zone zone--chance">
+      <h2 class="zone__title">Numéro{{ jeu.nbNumeroChanceATirer > 1 ? 's' : '' }} chance</h2>
+      <div class="zone__grid">
+        @for (n of numerosChance(); track n) {
+        <button
+          type="button"
+          class="num num--chance"
+          [class.num--selected]="isNumeroChanceSelected(n)"
+          [class.num--off]="isNumeroChanceDisabled(n) && !isNumeroChanceSelected(n)"
+          [disabled]="isNumeroChanceDisabled(n)"
+          [attr.aria-pressed]="isNumeroChanceSelected(n)"
+          (click)="toggleNumeroChance(n)"
+        >
+          {{ n }}
+        </button>
+        }
+      </div>
+    </section>
+    }
+  </div>
+
+  @if (!disabled() && errorMessage(); as message) {
+  <p class="grille__validation" role="status">{{ message }}</p>
+  }
+</section>
+}
