@@ -13,8 +13,4 @@ export class JeuService {
   getJeux(): Promise<Jeu[]> {
     return firstValueFrom(this.http.get<Jeu[]>(this.apiUrl));
   }
-
-  getJeu(id: number): Promise<Jeu> {
-    return firstValueFrom(this.http.get<Jeu>(`${this.apiUrl}/${id}`));
-  }
 }

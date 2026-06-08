@@ -3,21 +3,30 @@ import {
   Component,
   computed,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Jeu } from '../../shared/models/jeu.model';
 import {
+  GrilleDraft,
   GrilleLocalState,
   isGrilleComplete,
   MAX_GRILLES,
   Tirage,
 } from '../../shared/models/grille.model';
 import { JeuStore } from '../../shared/stores/jeu.store';
-import { JeuService } from '../../shared/services/jeu.service';
 import { TirageService } from '../../shared/services/tirage.service';
+import { FlashService } from '../../shared/services/flash.service';
 import { GrilleCard } from './grille-card/grille-card';
+
+/** Étape de révélation d'un numéro pendant l'animation de flash. */
+interface RevealStep {
+  grilleId: string;
+  kind: 'numero' | 'chance';
+  value: number;
+}
 
 @Component({
   selector: 'app-grille',
@@ -26,11 +35,17 @@ import { GrilleCard } from './grille-card/grille-card';
   styleUrl: './grille.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Grille implements OnInit {
+export class Grille implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly jeuStore = inject(JeuStore);
-  private readonly jeuService = inject(JeuService);
   private readonly tirageService = inject(TirageService);
+  private readonly flashService = inject(FlashService);
+
+  /** Délai entre deux numéros allumés pendant l'animation (ms). */
+  readonly animationIntervalMs = 150;
+
+  /** Timer de l'animation en cours, pour pouvoir l'arrêter/nettoyer. */
+  private animationTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly jeu = signal<Jeu | null>(null);
   readonly tirage = signal<Tirage | null>(null);
@@ -43,8 +58,30 @@ export class Grille implements OnInit {
   /** Identifiant du tirage en cours, conservé pour la soumission (LF-31). */
   readonly tirageId = computed<number | null>(() => this.tirage()?.id ?? null);
 
+  /** Nombre de flashs saisi ; `NaN` quand la saisie est vide ou non numérique. */
+  readonly flashCount = signal<number>(1);
+
+  /** Animation de flash en cours : verrouille les grilles et la barre de flash. */
+  readonly animating = signal<boolean>(false);
+
   /** Les grilles sont désactivées tant qu'aucun tirage n'est en cours. */
   readonly disabled = computed<boolean>(() => this.tirage() === null);
+
+  /** Saisie de flash invalide (hors 1..5 ou non entière). */
+  readonly flashCountInvalid = computed<boolean>(() => {
+    const n = this.flashCount();
+    return !Number.isInteger(n) || n < 1 || n > MAX_GRILLES;
+  });
+
+  /** Message d'erreur sous le champ ; null tant que la saisie est valide. */
+  readonly flashError = computed<string | null>(() =>
+    this.flashCountInvalid() ? `Maximum ${MAX_GRILLES} flashs autorisés` : null,
+  );
+
+  /** Le flash est possible : saisie valide, tirage en cours, pas d'animation. */
+  readonly canFlash = computed<boolean>(
+    () => !this.flashCountInvalid() && !this.disabled() && !this.animating(),
+  );
 
   /** On peut ajouter une grille tant qu'on est sous le plafond front (5). */
   readonly canAddGrille = computed<boolean>(() => this.grilles().length < MAX_GRILLES);
@@ -102,8 +139,17 @@ export class Grille implements OnInit {
   }
 
   private async loadJeu(id: number): Promise<Jeu> {
-    const fromStore = this.jeuStore.jeux().find((j) => j.id === id);
-    const jeu = fromStore ?? (await this.jeuService.getJeu(id));
+    // Au refresh direct, le store n'est pas encore peuplé (le Layout charge la
+    // liste de façon asynchrone). On s'appuie sur l'endpoint liste `GET /jeux`
+    // — le back n'expose pas `GET /jeux/:id` — pour retrouver le jeu par id.
+    let jeu = this.jeuStore.jeux().find((j) => j.id === id);
+    if (!jeu) {
+      await this.jeuStore.loadJeux();
+      jeu = this.jeuStore.jeux().find((j) => j.id === id);
+    }
+    if (!jeu) {
+      throw new Error('Jeu introuvable');
+    }
     this.jeuStore.selectJeu(jeu);
     return jeu;
   }
@@ -167,6 +213,103 @@ export class Grille implements OnInit {
       return current;
     }
     return [...current, n];
+  }
+
+  /** Met à jour le nombre de flashs depuis la saisie brute du champ number. */
+  setFlashCount(value: string): void {
+    this.flashCount.set(value.trim() === '' ? NaN : Number(value));
+  }
+
+  /**
+   * Écrase tout l'état courant et flashe N grilles : tire N grilles uniques
+   * puis lance l'animation de remplissage numéro par numéro.
+   */
+  flash(): void {
+    const jeu = this.jeu();
+    if (!this.canFlash() || !jeu) {
+      return;
+    }
+
+    this.stopAnimation();
+
+    // N grilles vides : l'animation les remplit ensuite, ce qui efface de fait
+    // toute sélection précédente (écrasement complet de l'état).
+    const drafts = this.flashService.flashGrilles(jeu, this.flashCount());
+    const fresh = drafts.map(() => this.emptyGrille());
+    this.grilles.set(fresh);
+
+    this.startAnimation(fresh.map((g, i) => ({ id: g.id, draft: drafts[i] })));
+  }
+
+  ngOnDestroy(): void {
+    this.stopAnimation();
+  }
+
+  /**
+   * Lance l'animation parallèle : à chaque tick, chaque grille révèle son
+   * numéro suivant (numéros principaux puis numéros chance). Les grilles
+   * progressent ensemble ; l'animation s'arrête quand toutes sont complètes.
+   */
+  private startAnimation(targets: Array<{ id: string; draft: GrilleDraft }>): void {
+    const sequences = new Map<string, RevealStep[]>(
+      targets.map(({ id, draft }) => [
+        id,
+        [
+          ...draft.numeros.map((value): RevealStep => ({ grilleId: id, kind: 'numero', value })),
+          ...draft.numeroChance.map(
+            (value): RevealStep => ({ grilleId: id, kind: 'chance', value }),
+          ),
+        ],
+      ]),
+    );
+
+    const maxLength = Math.max(0, ...[...sequences.values()].map((s) => s.length));
+    if (maxLength === 0) {
+      return;
+    }
+
+    this.animating.set(true);
+    let step = 0;
+
+    this.animationTimer = setInterval(() => {
+      const reveals = [...sequences.values()]
+        .map((s) => s[step])
+        .filter((s): s is RevealStep => s !== undefined);
+      this.applyReveals(reveals);
+
+      step++;
+      if (step >= maxLength) {
+        this.stopAnimation();
+      }
+    }, this.animationIntervalMs);
+  }
+
+  /** Applique une vague de révélations (une par grille) en une seule mise à jour. */
+  private applyReveals(reveals: RevealStep[]): void {
+    if (reveals.length === 0) {
+      return;
+    }
+    const byGrille = new Map<string, RevealStep>(reveals.map((r) => [r.grilleId, r]));
+    this.grilles.update((list) =>
+      list.map((g) => {
+        const reveal = byGrille.get(g.id);
+        if (!reveal) {
+          return g;
+        }
+        return reveal.kind === 'numero'
+          ? { ...g, selectedNumeros: [...g.selectedNumeros, reveal.value] }
+          : { ...g, selectedNumeroChance: [...g.selectedNumeroChance, reveal.value] };
+      }),
+    );
+  }
+
+  /** Stoppe l'animation en cours (le cas échéant) et déverrouille l'UI. */
+  private stopAnimation(): void {
+    if (this.animationTimer !== null) {
+      clearInterval(this.animationTimer);
+      this.animationTimer = null;
+    }
+    this.animating.set(false);
   }
 
   private emptyGrille(): GrilleLocalState {

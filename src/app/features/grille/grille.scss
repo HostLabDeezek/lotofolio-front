@@ -59,6 +59,107 @@
   }
 }
 
+// Barre de flash (input + bouton)
+
+.flash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  background: vars.$white;
+  border: 1px solid rgba(vars.$navy, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(vars.$navy, 0.04);
+
+  &--disabled {
+    opacity: 0.55;
+  }
+}
+
+.flash__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.flash__label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: vars.$text-dark;
+}
+
+.flash__input {
+  width: 88px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(vars.$navy, 0.18);
+  border-radius: 10px;
+  background: vars.$white;
+  color: vars.$text-dark;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 1px;
+    border-color: vars.$blue;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: vars.$danger;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.flash__button {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  background: vars.$gold;
+  color: vars.$navy;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+  box-shadow: 0 4px 12px rgba(vars.$gold, 0.3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    background: vars.$text-muted;
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.flash__error {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$danger;
+}
+
 // Liste des grilles : empilées verticalement, la page scrolle naturellement.
 
 .grille__list {

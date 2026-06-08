@@ -27,13 +27,43 @@
     }
   </header>
 
+  <div class="flash" [class.flash--disabled]="disabled()">
+    <div class="flash__field">
+      <label class="flash__label" for="flash-count">Nombre de flashs</label>
+      <input
+        id="flash-count"
+        class="flash__input"
+        type="number"
+        inputmode="numeric"
+        min="1"
+        max="5"
+        [value]="flashCount()"
+        [disabled]="disabled() || animating()"
+        [attr.aria-invalid]="flashCountInvalid() || null"
+        [attr.aria-describedby]="flashError() ? 'flash-error' : null"
+        (input)="setFlashCount($any($event.target).value)"
+      />
+    </div>
+    <button
+      type="button"
+      class="flash__button"
+      [disabled]="!canFlash()"
+      (click)="flash()"
+    >
+      {{ animating() ? 'Flash en cours…' : 'Flash' }}
+    </button>
+    @if (flashError(); as message) {
+    <p id="flash-error" class="flash__error" role="alert">{{ message }}</p>
+    }
+  </div>
+
   <div class="grille__list">
     @for (grille of grilles(); track grille.id; let i = $index) {
     <app-grille-card
       [jeu]="jeu"
       [grille]="grille"
       [position]="i + 1"
-      [disabled]="disabled()"
+      [disabled]="disabled() || animating()"
       [canDelete]="canRemoveGrille()"
       (numeroToggled)="toggleNumero(grille.id, $event)"
       (numeroChanceToggled)="toggleNumeroChance(grille.id, $event)"
@@ -46,7 +76,7 @@
     <button
       type="button"
       class="grille__add"
-      [disabled]="disabled() || !canAddGrille()"
+      [disabled]="disabled() || animating() || !canAddGrille()"
       [attr.aria-label]="'Ajouter une grille'"
       [attr.title]="!canAddGrille() ? 'Maximum 5 grilles à la fois' : null"
       (click)="addGrille()"
