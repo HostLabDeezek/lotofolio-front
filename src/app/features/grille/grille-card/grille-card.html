@@ -1,0 +1,65 @@
+<article class="card">
+  <header class="card__header">
+    <h2 class="card__title">Grille {{ position() }}</h2>
+    <button
+      type="button"
+      class="card__delete"
+      [disabled]="!canDelete()"
+      [attr.aria-label]="'Supprimer la grille ' + position()"
+      (click)="deleted.emit()"
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+  </header>
+
+  <div
+    class="card__board"
+    [class.card__board--disabled]="disabled()"
+    [attr.aria-disabled]="disabled() || null"
+    [attr.inert]="disabled() ? '' : null"
+  >
+    <section class="zone">
+      <h3 class="zone__title">Numéros</h3>
+      <div class="zone__grid">
+        @for (n of numeros(); track n) {
+        <button
+          type="button"
+          class="num"
+          [class.num--selected]="isNumeroSelected(n)"
+          [class.num--off]="isNumeroDisabled(n) && !isNumeroSelected(n)"
+          [disabled]="isNumeroDisabled(n)"
+          [attr.aria-pressed]="isNumeroSelected(n)"
+          (click)="numeroToggled.emit(n)"
+        >
+          {{ n }}
+        </button>
+        }
+      </div>
+    </section>
+
+    @if (jeu().nbNumeroChanceATirer > 0) {
+    <section class="zone zone--chance">
+      <h3 class="zone__title">Numéro{{ jeu().nbNumeroChanceATirer > 1 ? 's' : '' }} chance</h3>
+      <div class="zone__grid">
+        @for (n of numerosChance(); track n) {
+        <button
+          type="button"
+          class="num num--chance"
+          [class.num--selected]="isNumeroChanceSelected(n)"
+          [class.num--off]="isNumeroChanceDisabled(n) && !isNumeroChanceSelected(n)"
+          [disabled]="isNumeroChanceDisabled(n)"
+          [attr.aria-pressed]="isNumeroChanceSelected(n)"
+          (click)="numeroChanceToggled.emit(n)"
+        >
+          {{ n }}
+        </button>
+        }
+      </div>
+    </section>
+    }
+  </div>
+
+  @if (!disabled() && errorMessage(); as message) {
+  <p class="card__validation" role="status">{{ message }}</p>
+  }
+</article>

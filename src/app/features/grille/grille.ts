@@ -1,14 +1,15 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Jeu } from '../../shared/models/jeu.model';
-import { Tirage } from '../../shared/models/grille.model';
+import { GrilleLocalState, MAX_GRILLES, Tirage } from '../../shared/models/grille.model';
 import { JeuStore } from '../../shared/stores/jeu.store';
 import { JeuService } from '../../shared/services/jeu.service';
 import { TirageService } from '../../shared/services/tirage.service';
+import { GrilleCard } from './grille-card/grille-card';
 
 @Component({
   selector: 'app-grille',
-  imports: [],
+  imports: [GrilleCard],
   templateUrl: './grille.html',
   styleUrl: './grille.scss',
 })
@@ -23,47 +24,20 @@ export class Grille implements OnInit {
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
 
-  readonly selectedNumeros = signal<number[]>([]);
-  readonly selectedNumeroChance = signal<number[]>([]);
+  /** Liste des grilles composées simultanément ; une grille vide au départ. */
+  readonly grilles = signal<GrilleLocalState[]>([this.emptyGrille()]);
 
   /** Identifiant du tirage en cours, conservé pour la soumission (LF-31). */
   readonly tirageId = computed<number | null>(() => this.tirage()?.id ?? null);
 
-  /** La grille est désactivée tant qu'aucun tirage n'est en cours. */
+  /** Les grilles sont désactivées tant qu'aucun tirage n'est en cours. */
   readonly disabled = computed<boolean>(() => this.tirage() === null);
 
-  /** Numéros de la grille principale : 1..intervalNumero. */
-  readonly numeros = computed<number[]>(() => this.range(this.jeu()?.intervalNumero ?? 0));
+  /** On peut ajouter une grille tant qu'on est sous le plafond front (5). */
+  readonly canAddGrille = computed<boolean>(() => this.grilles().length < MAX_GRILLES);
 
-  /** Numéros chance : 1..intervalNumeroChance. */
-  readonly numerosChance = computed<number[]>(() =>
-    this.range(this.jeu()?.intervalNumeroChance ?? 0),
-  );
-
-  readonly isComplete = computed<boolean>(() => {
-    const jeu = this.jeu();
-    if (!jeu) {
-      return false;
-    }
-    return (
-      this.selectedNumeros().length === jeu.nbNumerosATirer &&
-      this.selectedNumeroChance().length === jeu.nbNumeroChanceATirer
-    );
-  });
-
-  readonly errorMessage = computed<string | null>(() => {
-    const jeu = this.jeu();
-    if (!jeu || this.isComplete()) {
-      return null;
-    }
-    const parts = [`${jeu.nbNumerosATirer} numéro${jeu.nbNumerosATirer > 1 ? 's' : ''}`];
-    if (jeu.nbNumeroChanceATirer > 0) {
-      parts.push(
-        `${jeu.nbNumeroChanceATirer} numéro${jeu.nbNumeroChanceATirer > 1 ? 's' : ''} chance`,
-      );
-    }
-    return `Sélectionnez ${parts.join(' et ')} pour valider la grille`;
-  });
+  /** On ne peut pas supprimer la dernière grille restante. */
+  readonly canRemoveGrille = computed<boolean>(() => this.grilles().length > 1);
 
   /** Libellé du tirage en cours, ex. « Tirage du 11 mai 2026 à 20h00 » (heure de Paris). */
   readonly tirageLabel = computed<string | null>(() => {
@@ -121,55 +95,87 @@ export class Grille implements OnInit {
     return jeu;
   }
 
-  toggleNumero(n: number): void {
-    if (this.isNumeroDisabled(n) && !this.selectedNumeros().includes(n)) {
+  /** Ajoute une grille vide ; sans effet si le plafond front est atteint. */
+  addGrille(): void {
+    if (!this.canAddGrille()) {
       return;
     }
-    this.toggle(this.selectedNumeros, n);
+    this.grilles.update((list) => [...list, this.emptyGrille()]);
   }
 
-  toggleNumeroChance(n: number): void {
-    if (this.isNumeroChanceDisabled(n) && !this.selectedNumeroChance().includes(n)) {
+  /** Supprime une grille ; sans effet s'il ne reste qu'une seule grille. */
+  removeGrille(id: string): void {
+    if (!this.canRemoveGrille()) {
       return;
     }
-    this.toggle(this.selectedNumeroChance, n);
+    this.grilles.update((list) => list.filter((g) => g.id !== id));
   }
 
-  isNumeroSelected(n: number): boolean {
-    return this.selectedNumeros().includes(n);
-  }
-
-  isNumeroChanceSelected(n: number): boolean {
-    return this.selectedNumeroChance().includes(n);
-  }
-
-  isNumeroDisabled(n: number): boolean {
+  toggleNumero(grilleId: string, n: number): void {
     if (this.disabled()) {
-      return true;
+      return;
     }
-    if (this.isNumeroSelected(n)) {
-      return false;
-    }
-    return this.selectedNumeros().length >= (this.jeu()?.nbNumerosATirer ?? 0);
-  }
-
-  isNumeroChanceDisabled(n: number): boolean {
-    if (this.disabled()) {
-      return true;
-    }
-    if (this.isNumeroChanceSelected(n)) {
-      return false;
-    }
-    return this.selectedNumeroChance().length >= (this.jeu()?.nbNumeroChanceATirer ?? 0);
-  }
-
-  private toggle(target: ReturnType<typeof signal<number[]>>, n: number): void {
-    target.update((current) =>
-      current.includes(n) ? current.filter((x) => x !== n) : [...current, n],
+    const max = this.jeu()?.nbNumerosATirer ?? 0;
+    this.grilles.update((list) =>
+      list.map((g) =>
+        g.id === grilleId
+          ? { ...g, selectedNumeros: this.toggleWithCap(g.selectedNumeros, n, max) }
+          : g,
+      ),
     );
   }
 
-  private range(max: number): number[] {
-    return Array.from({ length: Math.max(0, max) }, (_, i) => i + 1);
+  toggleNumeroChance(grilleId: string, n: number): void {
+    if (this.disabled()) {
+      return;
+    }
+    const max = this.jeu()?.nbNumeroChanceATirer ?? 0;
+    this.grilles.update((list) =>
+      list.map((g) =>
+        g.id === grilleId
+          ? { ...g, selectedNumeroChance: this.toggleWithCap(g.selectedNumeroChance, n, max) }
+          : g,
+      ),
+    );
+  }
+
+  isComplete(grille: GrilleLocalState): boolean {
+    const jeu = this.jeu();
+    if (!jeu) {
+      return false;
+    }
+    return (
+      grille.selectedNumeros.length === jeu.nbNumerosATirer &&
+      grille.selectedNumeroChance.length === jeu.nbNumeroChanceATirer
+    );
+  }
+
+  errorMessage(grille: GrilleLocalState): string | null {
+    const jeu = this.jeu();
+    if (!jeu || this.isComplete(grille)) {
+      return null;
+    }
+    const parts = [`${jeu.nbNumerosATirer} numéro${jeu.nbNumerosATirer > 1 ? 's' : ''}`];
+    if (jeu.nbNumeroChanceATirer > 0) {
+      parts.push(
+        `${jeu.nbNumeroChanceATirer} numéro${jeu.nbNumeroChanceATirer > 1 ? 's' : ''} chance`,
+      );
+    }
+    return `Sélectionnez ${parts.join(' et ')} pour valider la grille`;
+  }
+
+  /** Ajoute/retire `n` de la liste en respectant le plafond `max`. */
+  private toggleWithCap(current: number[], n: number, max: number): number[] {
+    if (current.includes(n)) {
+      return current.filter((x) => x !== n);
+    }
+    if (current.length >= max) {
+      return current;
+    }
+    return [...current, n];
+  }
+
+  private emptyGrille(): GrilleLocalState {
+    return { id: crypto.randomUUID(), selectedNumeros: [], selectedNumeroChance: [] };
   }
 }
