@@ -27,55 +27,32 @@
     }
   </header>
 
-  <div
-    class="grille__board"
-    [class.grille__board--disabled]="disabled()"
-    [attr.aria-disabled]="disabled() || null"
-    [attr.inert]="disabled() ? '' : null"
-  >
-    <section class="zone">
-      <h2 class="zone__title">Numéros</h2>
-      <div class="zone__grid">
-        @for (n of numeros(); track n) {
-        <button
-          type="button"
-          class="num"
-          [class.num--selected]="isNumeroSelected(n)"
-          [class.num--off]="isNumeroDisabled(n) && !isNumeroSelected(n)"
-          [disabled]="isNumeroDisabled(n)"
-          [attr.aria-pressed]="isNumeroSelected(n)"
-          (click)="toggleNumero(n)"
-        >
-          {{ n }}
-        </button>
-        }
-      </div>
-    </section>
-
-    @if (jeu.nbNumeroChanceATirer > 0) {
-    <section class="zone zone--chance">
-      <h2 class="zone__title">Numéro{{ jeu.nbNumeroChanceATirer > 1 ? 's' : '' }} chance</h2>
-      <div class="zone__grid">
-        @for (n of numerosChance(); track n) {
-        <button
-          type="button"
-          class="num num--chance"
-          [class.num--selected]="isNumeroChanceSelected(n)"
-          [class.num--off]="isNumeroChanceDisabled(n) && !isNumeroChanceSelected(n)"
-          [disabled]="isNumeroChanceDisabled(n)"
-          [attr.aria-pressed]="isNumeroChanceSelected(n)"
-          (click)="toggleNumeroChance(n)"
-        >
-          {{ n }}
-        </button>
-        }
-      </div>
-    </section>
+  <div class="grille__list">
+    @for (grille of grilles(); track grille.id; let i = $index) {
+    <app-grille-card
+      [jeu]="jeu"
+      [grille]="grille"
+      [position]="i + 1"
+      [disabled]="disabled()"
+      [canDelete]="canRemoveGrille()"
+      (numeroToggled)="toggleNumero(grille.id, $event)"
+      (numeroChanceToggled)="toggleNumeroChance(grille.id, $event)"
+      (deleted)="removeGrille(grille.id)"
+    />
     }
   </div>
 
-  @if (!disabled() && errorMessage(); as message) {
-  <p class="grille__validation" role="status">{{ message }}</p>
-  }
+  <div class="grille__actions">
+    <button
+      type="button"
+      class="grille__add"
+      [disabled]="disabled() || !canAddGrille()"
+      [attr.aria-label]="'Ajouter une grille'"
+      [attr.title]="!canAddGrille() ? 'Maximum 5 grilles à la fois' : null"
+      (click)="addGrille()"
+    >
+      <span aria-hidden="true">+</span>
+    </button>
+  </div>
 </section>
 }
