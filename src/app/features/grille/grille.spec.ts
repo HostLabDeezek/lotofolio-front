@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -209,13 +209,123 @@ describe('Grille', () => {
     });
   });
 
+  describe('flash : validation de la saisie', () => {
+    it('flashCount vaut 1 par défaut', () => {
+      const { component } = setup();
+      expect(component.flashCount()).toBe(1);
+      expect(component.flashError()).toBeNull();
+    });
+
+    it('une valeur > 5 affiche « Maximum 5 flashs autorisés » et bloque le flash', () => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(TIRAGE);
+
+      component.setFlashCount('6');
+      expect(component.flashError()).toBe('Maximum 5 flashs autorisés');
+      expect(component.canFlash()).toBe(false);
+    });
+
+    it('une valeur < 1 est invalide', () => {
+      const { component } = setup();
+      component.setFlashCount('0');
+      expect(component.flashError()).toBe('Maximum 5 flashs autorisés');
+      expect(component.canFlash()).toBe(false);
+    });
+
+    it('une valeur non numérique est invalide', () => {
+      const { component } = setup();
+      component.setFlashCount('abc');
+      expect(component.flashError()).toBe('Maximum 5 flashs autorisés');
+      expect(component.canFlash()).toBe(false);
+    });
+
+    it('le flash est impossible sans tirage en cours', () => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(null);
+      expect(component.canFlash()).toBe(false);
+    });
+  });
+
+  describe('flash : comportement', () => {
+    it('écrase tout l’état courant par N grilles, quel que soit l’état précédent', () => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(TIRAGE);
+      // État pré-existant : 3 grilles dont une partiellement remplie.
+      component.addGrille();
+      component.addGrille();
+      component.toggleNumero(grilleId(component, 0), 7);
+
+      component.setFlashCount('2');
+      component.flash();
+
+      expect(component.grilles().length).toBe(2);
+      // L'ancienne sélection a disparu (l'animation part de grilles vides).
+      expect(component.grilles().every((g) => !g.selectedNumeros.includes(7))).toBe(true);
+    });
+
+    it('remplit progressivement puis complète les grilles à la fin de l’animation', fakeAsync(() => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(TIRAGE);
+
+      component.setFlashCount('3');
+      component.flash();
+
+      expect(component.animating()).toBe(true);
+
+      tick(5000);
+
+      expect(component.animating()).toBe(false);
+      expect(component.grilles().length).toBe(3);
+      for (const g of component.grilles()) {
+        expect(g.selectedNumeros.length).toBe(JEU.nbNumerosATirer);
+        expect(g.selectedNumeroChance.length).toBe(JEU.nbNumeroChanceATirer);
+      }
+    }));
+
+    it('n’a aucun effet quand la saisie est invalide', () => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(TIRAGE);
+      component.setFlashCount('6');
+
+      component.flash();
+
+      expect(component.animating()).toBe(false);
+      expect(component.grilles().length).toBe(1);
+    });
+
+    it('un nouveau flash relance l’animation et réécrase l’état', fakeAsync(() => {
+      const { component } = setup();
+      component.jeu.set(JEU);
+      component.tirage.set(TIRAGE);
+
+      component.setFlashCount('2');
+      component.flash();
+      tick(5000);
+      const first = component.grilles().map((g) => g.id);
+
+      component.flash();
+      tick(5000);
+      const second = component.grilles().map((g) => g.id);
+
+      expect(second.length).toBe(2);
+      expect(second.some((id) => first.includes(id))).toBe(false);
+    }));
+  });
+
   describe('chargement (ngOnInit)', () => {
-    it('charge le jeu et le tirage et conserve tirage.id', async () => {
+    it('au refresh (store vide), récupère le jeu via la liste, pas via GET /jeux/:id', async () => {
       const { fixture, component } = setup('1');
       fixture.detectChanges(); // déclenche ngOnInit
 
       const httpMock = TestBed.inject(HttpTestingController);
-      httpMock.expectOne(`${environment.apiUrl}/jeux/1`).flush(JEU);
+      // Le back n'expose pas GET /jeux/:id (404) : on doit passer par la liste.
+      httpMock.expectNone(`${environment.apiUrl}/jeux/1`);
+      httpMock.expectOne(`${environment.apiUrl}/jeux`).flush([JEU]);
       httpMock.expectOne(`${environment.apiUrl}/jeux/1/current-tirage`).flush(TIRAGE);
 
       await fixture.whenStable();
@@ -223,6 +333,21 @@ describe('Grille', () => {
       expect(component.jeu()?.nom).toBe('Loto');
       expect(component.tirage()?.id).toBe(42);
       expect(component.tirageId()).toBe(42);
+      httpMock.verify();
+    });
+
+    it('affiche une erreur quand le jeu est absent de la liste', async () => {
+      const { fixture, component } = setup('999');
+      fixture.detectChanges();
+
+      const httpMock = TestBed.inject(HttpTestingController);
+      httpMock.expectOne(`${environment.apiUrl}/jeux`).flush([JEU]);
+      httpMock.expectOne(`${environment.apiUrl}/jeux/999/current-tirage`).flush(TIRAGE);
+
+      await fixture.whenStable();
+
+      expect(component.jeu()).toBeNull();
+      expect(component.error()).toBe('Impossible de charger le jeu');
       httpMock.verify();
     });
   });
