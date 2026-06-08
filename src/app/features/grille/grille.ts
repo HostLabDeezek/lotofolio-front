@@ -42,7 +42,7 @@ export class Grille implements OnInit, OnDestroy {
   private readonly flashService = inject(FlashService);
 
   /** Délai entre deux numéros allumés pendant l'animation (ms). */
-  readonly animationIntervalMs = 150;
+  private readonly animationIntervalMs = 150;
 
   /** Timer de l'animation en cours, pour pouvoir l'arrêter/nettoyer. */
   private animationTimer: ReturnType<typeof setInterval> | null = null;
@@ -213,6 +213,11 @@ export class Grille implements OnInit, OnDestroy {
       return current;
     }
     return [...current, n];
+  }
+
+  /** Relaie l'événement `input` du champ number vers `setFlashCount`. */
+  onFlashCountInput(event: Event): void {
+    this.setFlashCount((event.target as HTMLInputElement).value);
   }
 
   /** Met à jour le nombre de flashs depuis la saisie brute du champ number. */

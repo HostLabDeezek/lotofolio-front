@@ -31,15 +31,19 @@ export class FlashService {
   flashGrilles(jeu: Jeu, count: number): GrilleDraft[] {
     const grilles: GrilleDraft[] = [];
     const seen = new Set<string>();
+    // Borne globale : garantit la terminaison même quand l'unicité est
+    // impossible (config dégénérée où les combinaisons possibles < count).
+    const maxAttempts = count * FlashService.MAX_DRAW_ATTEMPTS;
+    let attempts = 0;
 
-    while (grilles.length < count) {
-      let draft = this.flashGrille(jeu);
-      let attempts = 0;
-      while (seen.has(this.key(draft)) && attempts < FlashService.MAX_DRAW_ATTEMPTS) {
-        draft = this.flashGrille(jeu);
-        attempts++;
+    while (grilles.length < count && attempts < maxAttempts) {
+      attempts++;
+      const draft = this.flashGrille(jeu);
+      const k = this.key(draft);
+      if (seen.has(k)) {
+        continue; // jamais de doublon dans le lot
       }
-      seen.add(this.key(draft));
+      seen.add(k);
       grilles.push(draft);
     }
 

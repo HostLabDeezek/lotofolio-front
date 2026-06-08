@@ -41,7 +41,7 @@
         [disabled]="disabled() || animating()"
         [attr.aria-invalid]="flashCountInvalid() || null"
         [attr.aria-describedby]="flashError() ? 'flash-error' : null"
-        (input)="setFlashCount($any($event.target).value)"
+        (input)="onFlashCountInput($event)"
       />
     </div>
     <button
