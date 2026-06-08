@@ -194,19 +194,6 @@ describe('Grille', () => {
       expect(component.isComplete(component.grilles()[0])).toBe(true);
     });
 
-    it('errorMessage présent tant qu’incomplet, null une fois complet', () => {
-      const { component } = setup();
-      component.jeu.set({ ...JEU, nbNumerosATirer: 1, nbNumeroChanceATirer: 1 });
-      component.tirage.set(TIRAGE);
-      const id = grilleId(component, 0);
-
-      expect(component.errorMessage(component.grilles()[0])).toBeTruthy();
-
-      component.toggleNumero(id, 1);
-      component.toggleNumeroChance(id, 2);
-      expect(component.errorMessage(component.grilles()[0])).toBeNull();
-    });
-
     it('la validité d’une grille n’affecte pas celle d’une autre', () => {
       const { component } = setup();
       component.jeu.set({ ...JEU, nbNumerosATirer: 1, nbNumeroChanceATirer: 1 });

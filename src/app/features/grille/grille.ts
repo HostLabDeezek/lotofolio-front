@@ -1,7 +1,19 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Jeu } from '../../shared/models/jeu.model';
-import { GrilleLocalState, MAX_GRILLES, Tirage } from '../../shared/models/grille.model';
+import {
+  GrilleLocalState,
+  isGrilleComplete,
+  MAX_GRILLES,
+  Tirage,
+} from '../../shared/models/grille.model';
 import { JeuStore } from '../../shared/stores/jeu.store';
 import { JeuService } from '../../shared/services/jeu.service';
 import { TirageService } from '../../shared/services/tirage.service';
@@ -12,6 +24,7 @@ import { GrilleCard } from './grille-card/grille-card';
   imports: [GrilleCard],
   templateUrl: './grille.html',
   styleUrl: './grille.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Grille implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -139,29 +152,10 @@ export class Grille implements OnInit {
     );
   }
 
+  /** Validité d'une grille (domaine) ; réutilisée pour la soumission (LF-31). */
   isComplete(grille: GrilleLocalState): boolean {
     const jeu = this.jeu();
-    if (!jeu) {
-      return false;
-    }
-    return (
-      grille.selectedNumeros.length === jeu.nbNumerosATirer &&
-      grille.selectedNumeroChance.length === jeu.nbNumeroChanceATirer
-    );
-  }
-
-  errorMessage(grille: GrilleLocalState): string | null {
-    const jeu = this.jeu();
-    if (!jeu || this.isComplete(grille)) {
-      return null;
-    }
-    const parts = [`${jeu.nbNumerosATirer} numéro${jeu.nbNumerosATirer > 1 ? 's' : ''}`];
-    if (jeu.nbNumeroChanceATirer > 0) {
-      parts.push(
-        `${jeu.nbNumeroChanceATirer} numéro${jeu.nbNumeroChanceATirer > 1 ? 's' : ''} chance`,
-      );
-    }
-    return `Sélectionnez ${parts.join(' et ')} pour valider la grille`;
+    return jeu ? isGrilleComplete(grille, jeu) : false;
   }
 
   /** Ajoute/retire `n` de la liste en respectant le plafond `max`. */

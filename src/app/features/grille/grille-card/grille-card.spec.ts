@@ -19,23 +19,27 @@ function grille(overrides: Partial<GrilleLocalState> = {}): GrilleLocalState {
 }
 
 function setup(inputs: {
+  jeu?: Jeu;
   grille?: GrilleLocalState;
   position?: number;
   disabled?: boolean;
   canDelete?: boolean;
-  errorMessage?: string | null;
 }) {
   TestBed.configureTestingModule({ imports: [GrilleCard] });
   const fixture: ComponentFixture<GrilleCard> = TestBed.createComponent(GrilleCard);
   const ref = fixture.componentRef;
-  ref.setInput('jeu', JEU);
+  ref.setInput('jeu', inputs.jeu ?? JEU);
   ref.setInput('grille', inputs.grille ?? grille());
   ref.setInput('position', inputs.position ?? 1);
   ref.setInput('disabled', inputs.disabled ?? false);
   ref.setInput('canDelete', inputs.canDelete ?? true);
-  ref.setInput('errorMessage', inputs.errorMessage ?? null);
   fixture.detectChanges();
   return { fixture, component: fixture.componentInstance };
+}
+
+/** Grille complète pour le JEU par défaut (5 numéros + 1 chance). */
+function fullGrille(): GrilleLocalState {
+  return grille({ selectedNumeros: [1, 2, 3, 4, 5], selectedNumeroChance: [7] });
 }
 
 describe('GrilleCard', () => {
@@ -96,14 +100,21 @@ describe('GrilleCard', () => {
     expect(del.disabled).toBe(true);
   });
 
-  it('affiche le message d’erreur fourni quand non désactivé', () => {
-    const { fixture } = setup({ errorMessage: 'Sélectionnez 5 numéros' });
+  it('dérive et affiche le message d’aide quand la grille est incomplète', () => {
+    const { fixture } = setup({});
     const msg = fixture.nativeElement.querySelector('.card__validation');
-    expect(msg.textContent).toContain('Sélectionnez 5 numéros');
+    expect(msg.textContent).toContain('5 numéros');
+    expect(msg.textContent).toContain('1 numéro chance');
   });
 
-  it('masque le message d’erreur quand disabled', () => {
-    const { fixture } = setup({ disabled: true, errorMessage: 'Sélectionnez 5 numéros' });
+  it('masque le message quand la grille est complète', () => {
+    const { fixture } = setup({ grille: fullGrille() });
+    const msg = fixture.nativeElement.querySelector('.card__validation');
+    expect(msg).toBeNull();
+  });
+
+  it('masque le message quand disabled, même si la grille est incomplète', () => {
+    const { fixture } = setup({ disabled: true });
     const msg = fixture.nativeElement.querySelector('.card__validation');
     expect(msg).toBeNull();
   });

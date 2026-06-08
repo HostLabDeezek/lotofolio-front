@@ -49,8 +49,8 @@
     color 0.12s ease;
 
   &:hover:not(:disabled) {
-    border-color: #e11d48;
-    color: #e11d48;
+    border-color: vars.$danger;
+    color: vars.$danger;
   }
 
   &:focus-visible {
@@ -136,8 +136,8 @@
   }
 
   &--chance.num--selected {
-    background: #f59e0b;
-    border-color: #f59e0b;
+    background: vars.$amber;
+    border-color: vars.$amber;
   }
 
   // Max atteint : non sélectionné => grisé et non cliquable

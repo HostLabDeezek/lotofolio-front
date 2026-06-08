@@ -35,7 +35,6 @@
       [position]="i + 1"
       [disabled]="disabled()"
       [canDelete]="canRemoveGrille()"
-      [errorMessage]="errorMessage(grille)"
       (numeroToggled)="toggleNumero(grille.id, $event)"
       (numeroChanceToggled)="toggleNumeroChance(grille.id, $event)"
       (deleted)="removeGrille(grille.id)"

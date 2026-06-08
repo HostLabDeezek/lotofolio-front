@@ -1,6 +1,6 @@
-import { Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Jeu } from '../../../shared/models/jeu.model';
-import { GrilleLocalState } from '../../../shared/models/grille.model';
+import { GrilleLocalState, isGrilleComplete } from '../../../shared/models/grille.model';
 
 /**
  * Rendu d'une grille unique (LF-29). Composant purement présentationnel :
@@ -11,6 +11,7 @@ import { GrilleLocalState } from '../../../shared/models/grille.model';
   imports: [],
   templateUrl: './grille-card.html',
   styleUrl: './grille-card.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GrilleCard {
   readonly jeu = input.required<Jeu>();
@@ -20,8 +21,6 @@ export class GrilleCard {
   readonly disabled = input<boolean>(false);
   /** Le bouton de suppression est masqué/désactivé quand false. */
   readonly canDelete = input<boolean>(true);
-  /** Message d'aide à la complétion, fourni par le parent (null si complète). */
-  readonly errorMessage = input<string | null>(null);
 
   readonly numeroToggled = output<number>();
   readonly numeroChanceToggled = output<number>();
@@ -32,6 +31,21 @@ export class GrilleCard {
 
   /** Numéros chance : 1..intervalNumeroChance. */
   readonly numerosChance = computed<number[]>(() => this.range(this.jeu().intervalNumeroChance));
+
+  /** Message d'aide à la complétion, dérivé de l'état ; null si la grille est complète. */
+  readonly errorMessage = computed<string | null>(() => {
+    const jeu = this.jeu();
+    if (isGrilleComplete(this.grille(), jeu)) {
+      return null;
+    }
+    const parts = [`${jeu.nbNumerosATirer} numéro${jeu.nbNumerosATirer > 1 ? 's' : ''}`];
+    if (jeu.nbNumeroChanceATirer > 0) {
+      parts.push(
+        `${jeu.nbNumeroChanceATirer} numéro${jeu.nbNumeroChanceATirer > 1 ? 's' : ''} chance`,
+      );
+    }
+    return `Sélectionnez ${parts.join(' et ')} pour valider la grille`;
+  });
 
   isNumeroSelected(n: number): boolean {
     return this.grille().selectedNumeros.includes(n);
