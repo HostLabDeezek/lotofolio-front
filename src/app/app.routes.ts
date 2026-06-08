@@ -10,6 +10,10 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'jeux', pathMatch: 'full' },
       { path: 'jeux', loadComponent: () => import('./features/games/games').then(m => m.Games) },
+      {
+        path: 'jeux/:id/grille',
+        loadComponent: () => import('./features/grille/grille').then(m => m.Grille),
+      },
     ],
   },
   { path: '**', redirectTo: '/jeux' },

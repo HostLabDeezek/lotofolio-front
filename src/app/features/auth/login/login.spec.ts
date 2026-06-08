@@ -57,9 +57,9 @@ describe('Login', () => {
       authSpy.login.and.returnValue(of(mockLoginResponse));
     });
 
-    it('navigue vers / après connexion', () => {
+    it('navigue vers /jeux après connexion', () => {
       component.onSubmit();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/jeux']);
     });
 
     it('désactive le chargement après connexion', () => {
