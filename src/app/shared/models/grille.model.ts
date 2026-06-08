@@ -3,12 +3,15 @@ export interface GrilleDraft {
   numeroChance: number[];
 }
 
+/** Statuts de tirage renvoyés par le back. */
+export type TirageStatus = 'PENDING' | 'DRAWING' | 'DONE' | 'EXPIRED';
+
 export interface Tirage {
   id: number;
   jeuId: number;
   dateTirage: string;
   numerosTires: number[];
   numeroChanceTire: number[];
-  status?: string; // PENDING | DRAWING | DONE | EXPIRED (renvoyé par le back)
+  status?: TirageStatus;
   createdAt?: string;
 }

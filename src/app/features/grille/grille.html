@@ -27,7 +27,12 @@
     }
   </header>
 
-  <div class="grille__board" [class.grille__board--disabled]="disabled()">
+  <div
+    class="grille__board"
+    [class.grille__board--disabled]="disabled()"
+    [attr.aria-disabled]="disabled() || null"
+    [attr.inert]="disabled() ? '' : null"
+  >
     <section class="zone">
       <h2 class="zone__title">Numéros</h2>
       <div class="zone__grid">

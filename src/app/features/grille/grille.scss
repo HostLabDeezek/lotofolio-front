@@ -66,9 +66,11 @@
   flex-direction: column;
   gap: 1.75rem;
 
+  // L'attribut `inert` (posé dans le template) retire le sous-arbre des
+  // interactions souris/clavier et de l'arbre d'accessibilité ; ici on ne
+  // gère que le rendu visuel de l'état désactivé.
   &--disabled {
     opacity: 0.55;
-    pointer-events: none;
   }
 }
 

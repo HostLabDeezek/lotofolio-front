@@ -32,9 +32,9 @@
       J'en ai réalisé l'intégralité du développement. L'interface est conçue avec Angular (système moderne de
       <strong>Signals</strong>), tandis que la logique métier et la base de données s'appuient sur
       <strong>Node.js</strong> et <strong>PostgreSQL</strong>. J'aborde ce projet avec la même rigueur qu'en entreprise
-      : sécurité et stabilité passent avant tout. L'application dispose aujourd'hui d'une base technique solide et
-      entièrement sécurisée — authentification, structure des données, architecture front/back réfléchie — prête à
-      accueillir les prochains écrans métier (jeu, tirage, résultats).
+      : sécurité et stabilité passent avant tout. Au-delà de la base technique (authentification, structure des
+      données, architecture front/back), le cœur du jeu est désormais en place côté back-end : tirages planifiés,
+      récupération du tirage courant et soumission de grilles, le tout couvert par des tests automatisés.
     </p>
   </div>
 
@@ -48,10 +48,14 @@
         veille après ~15 minutes d'inactivité. La
         <strong>première requête peut prendre 30 à 60 secondes</strong> (cold start),
         ensuite tout est instantané. Si la page de connexion semble figée au premier
-        essai, laissez-lui ce petit délai. Côté périmètre, seuls les endpoints
-        <code>/auth</code> et <code>GET /jeux</code> sont actifs aujourd'hui — les
-        routes Grilles, Tirages, Parties, Resultats sont à venir (modèles déjà
-        en place).
+        essai, laissez-lui ce petit délai.
+      </p>
+      <p class="callout__body">
+        Côté périmètre, en plus de <code>/auth</code> et <code>GET /jeux</code>, le
+        moteur de jeu est maintenant exposé côté API :
+        <code>GET /jeux/:id/current-tirage</code> (tirage du jour jouable) et
+        <code>POST /parties</code> (validation d'une ou plusieurs grilles). Les écrans
+        front correspondants sont la prochaine étape.
       </p>
     </div>
   </div>
@@ -112,14 +116,16 @@
     </p>
   </app-recruiter-step>
 
-  <app-recruiter-step number="3" icon="construction" title="Suite à venir (en cours de développement)">
+  <app-recruiter-step number="3" icon="construction" title="Le moteur de jeu (back-end opérationnel, branchement front en cours)">
     <p>
-      Les écrans pour <strong>composer une grille</strong>,
-      <strong>déclencher un tirage</strong> et
-      <strong>consulter les résultats</strong> sont la prochaine étape. Côté back, les
-      modèles Prisma <code>Grille</code>, <code>Tirage</code>, <code>Partie</code> et
-      <code>Resultat</code> sont déjà en place avec leurs relations — il reste à
-      câbler les routes et les services.
+      Côté serveur, jouer une grille est déjà fonctionnel et testé. Un job planifié
+      génère les tirages et exécute le tirage du jour ; l'API expose le tirage courant
+      avec une <strong>fenêtre de fermeture</strong> (on ne peut plus jouer dans les
+      dernières minutes avant le tirage). La soumission d'une partie se fait en une
+      seule <strong>transaction atomique et idempotente</strong> : un même joueur ne
+      peut pas créer de doublon sur un tirage, chaque grille est validée (nombre de
+      numéros, plages autorisées, doublons) avant l'enregistrement. Il reste à câbler
+      les écrans pour composer une grille et consulter les résultats.
     </p>
   </app-recruiter-step>
 
