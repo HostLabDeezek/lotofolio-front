@@ -1,0 +1,111 @@
+@if (loading()) {
+  <div class="state state--loading">
+    <div class="state__spinner"></div>
+    <p class="state__text">Chargement de la grille…</p>
+  </div>
+} @else if (error()) {
+  <div class="state state--error">
+    <p class="state__text">{{ error() }}</p>
+  </div>
+} @else if (jeu(); as jeu) {
+  <section class="grille">
+    <header class="grille__header">
+      <h1 class="grille__title">{{ jeu.nom }}</h1>
+      @if (jeu.description) {
+        <p class="grille__description">{{ jeu.description }}</p>
+      }
+      @if (jeu.regle) {
+        <p class="grille__regle">{{ jeu.regle }}</p>
+      }
+
+      @if (tirageLabel(); as label) {
+        <p class="grille__tirage">{{ label }}</p>
+      } @else {
+        <p class="grille__tirage grille__tirage--none">
+          Aucun tirage disponible actuellement, revenez plus tard.
+        </p>
+      }
+
+      @if (cutoffLabel(); as cutoff) {
+        <p class="grille__cutoff">
+          {{ cutoff }}
+          @if (countdownLabel(); as countdown) {
+            <span class="grille__countdown">· {{ countdown }}</span>
+          }
+        </p>
+      }
+    </header>
+
+    @if (closed()) {
+      <div class="banner banner--closed" role="status">
+        La saisie est fermée pour le tirage de ce soir. Le prochain tirage ouvrira à 20h.
+      </div>
+    }
+    @if (submitError(); as message) {
+      <div class="banner banner--error" role="alert">{{ message }}</div>
+    }
+
+    <div class="flash" [class.flash--disabled]="disabled()">
+      <div class="flash__field">
+        <label class="flash__label" for="flash-count">Nombre de flashs</label>
+        <input
+          id="flash-count"
+          class="flash__input"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="5"
+          [value]="flashCount()"
+          [disabled]="disabled() || animating()"
+          [attr.aria-invalid]="flashCountInvalid() || null"
+          [attr.aria-describedby]="flashError() ? 'flash-error' : null"
+          (input)="onFlashCountInput($event)"
+        />
+      </div>
+      <button type="button" class="flash__button" [disabled]="!canFlash()" (click)="flash()">
+        {{ animating() ? 'Flash en cours…' : 'Flash' }}
+      </button>
+      @if (flashError(); as message) {
+        <p id="flash-error" class="flash__error" role="alert">{{ message }}</p>
+      }
+    </div>
+
+    <div class="grille__list">
+      @for (grille of grilles(); track grille.id; let i = $index) {
+        <app-grille-card
+          [jeu]="jeu"
+          [grille]="grille"
+          [position]="i + 1"
+          [disabled]="disabled() || animating()"
+          [canDelete]="canRemoveGrille()"
+          (numeroToggled)="toggleNumero(grille.id, $event)"
+          (numeroChanceToggled)="toggleNumeroChance(grille.id, $event)"
+          (deleted)="removeGrille(grille.id)"
+        />
+      }
+    </div>
+
+    <div class="grille__actions">
+      <button
+        type="button"
+        class="grille__add"
+        [disabled]="disabled() || animating() || !canAddGrille()"
+        [attr.aria-label]="'Ajouter une grille'"
+        [attr.title]="!canAddGrille() ? 'Maximum 5 grilles à la fois' : null"
+        (click)="addGrille()"
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+    </div>
+
+    @if (submitHint(); as hint) {
+      <p class="grille__submit-hint">{{ hint }}</p>
+    }
+
+    <div class="grille__submit">
+      <button type="button" class="grille__validate" [disabled]="!canSubmit()" (click)="submit()">
+        {{ submitting() ? 'Enregistrement…' : 'Valider mes grilles' }}
+      </button>
+    </div>
+  </section>
+}

@@ -1,4 +1,9 @@
-<div class="jeu-card" [attr.data-index]="colorIndex() % 6">
+<a
+    class="jeu-card"
+    [attr.data-index]="colorIndex() % 6"
+    [routerLink]="['/jeux', jeu().id, 'grille']"
+    [attr.aria-label]="'Jouer au jeu ' + jeu().nom"
+>
     <div class="jeu-card__visual">
         <span class="jeu-card__game-name">{{ jeu().nom }}</span>
     </div>
@@ -13,4 +18,4 @@
             }
         </p>
     </div>
-</div>
+</a>

@@ -11,10 +11,13 @@ npm test           # Run all tests (Karma/Jasmine)
 npm run serve:ssr:loto-frontend  # SSR server
 ```
 
-Run a single test file by passing the spec path:
+Run a focused subset of specs (headless, exits cleanly):
 ```bash
-npx karma start --single-run --include="**/auth.spec.ts"
+npx ng test --include="**/auth.spec.ts" --watch=false --browsers=ChromeHeadless
 ```
+The `--include` glob accepts patterns (e.g. `"**/grille*.spec.ts"`). Prefer
+`ng test` over `karma start` directly: the project uses the `@angular/build:karma`
+builder with no `karma.conf.js`, so `karma start` captures the browser unreliably.
 
 ## Architecture
 

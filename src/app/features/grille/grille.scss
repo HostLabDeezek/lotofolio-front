@@ -1,0 +1,316 @@
+@use 'variables' as vars;
+
+:host {
+  display: block;
+  padding: 1.5rem 0 4rem;
+  background: #f2f4f8;
+  min-height: 100%;
+}
+
+.grille {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+// En-tête
+
+.grille__header {
+  margin-bottom: 1.75rem;
+}
+
+.grille__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: vars.$text-dark;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.02em;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 3px;
+    background: vars.$blue;
+    margin-top: 0.6rem;
+  }
+}
+
+.grille__description,
+.grille__regle {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  color: vars.$text-muted;
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
+.grille__tirage {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: vars.$blue;
+  margin: 0.9rem 0 0;
+
+  &--none {
+    color: vars.$text-muted;
+    font-weight: 500;
+  }
+}
+
+.grille__cutoff {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  color: vars.$text-muted;
+  margin: 0.4rem 0 0;
+}
+
+.grille__countdown {
+  font-weight: 600;
+  color: vars.$gold;
+}
+
+// Bandeaux en tête de page (fermeture cutoff / erreur de soumission)
+
+.banner {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  &--closed {
+    background: rgba(vars.$gold, 0.14);
+    border: 1px solid rgba(vars.$gold, 0.4);
+    color: vars.$text-dark;
+  }
+
+  &--error {
+    background: rgba(vars.$danger, 0.1);
+    border: 1px solid rgba(vars.$danger, 0.35);
+    color: vars.$danger;
+  }
+}
+
+// Barre de flash (input + bouton)
+
+.flash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  background: vars.$white;
+  border: 1px solid rgba(vars.$navy, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(vars.$navy, 0.04);
+
+  &--disabled {
+    opacity: 0.55;
+  }
+}
+
+.flash__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.flash__label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: vars.$text-dark;
+}
+
+.flash__input {
+  width: 88px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(vars.$navy, 0.18);
+  border-radius: 10px;
+  background: vars.$white;
+  color: vars.$text-dark;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 1px;
+    border-color: vars.$blue;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: vars.$danger;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Primitives communes à tous les boutons d'action.
+.flash__button,
+.grille__add,
+.grille__validate {
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.flash__button {
+  padding: 0.6rem 1.5rem;
+  border-radius: 10px;
+  background: vars.$gold;
+  color: vars.$navy;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(vars.$gold, 0.3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 3px;
+  }
+}
+
+// État désactivé commun aux boutons d'action (flash, ajout, validation).
+.flash__button:disabled,
+.grille__add:disabled,
+.grille__validate:disabled {
+  background: vars.$text-muted;
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.flash__error {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$danger;
+}
+
+// Liste des grilles : empilées verticalement, la page scrolle naturellement.
+
+.grille__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// Actions (bouton « + » et validation)
+
+.grille__actions,
+.grille__submit {
+  display: flex;
+  justify-content: center;
+}
+
+.grille__actions {
+  margin-top: 1.5rem;
+}
+
+// Boutons d'action bleus (ajout « + » et validation) : base commune.
+.grille__add,
+.grille__validate {
+  background: vars.$blue;
+  color: vars.$white;
+  box-shadow: 0 4px 12px rgba(vars.$blue, 0.3);
+
+  &:hover:not(:disabled) {
+    background: vars.$blue-hover;
+    transform: translateY(-2px);
+  }
+}
+
+.grille__add {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 2rem;
+  line-height: 1;
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 3px;
+  }
+}
+
+// Soumission (« Valider mes grilles »)
+
+.grille__submit-hint {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$text-muted;
+}
+
+.grille__submit {
+  margin-top: 1rem;
+}
+
+.grille__validate {
+  padding: 0.85rem 2.25rem;
+  border-radius: 12px;
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+
+  &:focus-visible {
+    outline: 2px solid vars.$gold;
+    outline-offset: 3px;
+  }
+}
+
+// États (chargement / erreur)
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  gap: 1.25rem;
+}
+
+.state__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(vars.$blue, 0.15);
+  border-top-color: vars.$blue;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.state__text {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  color: vars.$text-muted;
+  margin: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
