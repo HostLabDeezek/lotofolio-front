@@ -1,4 +1,4 @@
-import { PartieDetail, rankGrilles } from './historique.model';
+import { GrilleRanked, PartieDetail, rankGrilles } from './historique.model';
 
 /** Usine de PartieDetail minimal pour les tests de rankGrilles. */
 function makeDetail(
@@ -72,6 +72,17 @@ describe('rankGrilles', () => {
     expect(result).toHaveSize(3);
   });
 
+  it('retourne toutes les grilles si topN <= 0', () => {
+    const detail = makeDetail([
+      { numeros: [1, 2, 3, 4, 5], numeroChance: [1] },
+      { numeros: [7, 14, 1, 2, 3], numeroChance: [1] },
+      { numeros: [7, 14, 23, 31, 42], numeroChance: [3] },
+    ]);
+
+    expect(rankGrilles(detail, 0)).toHaveSize(3);
+    expect(rankGrilles(detail, -1)).toHaveSize(3);
+  });
+
   it('assigne rank 1 à la meilleure grille', () => {
     const detail = makeDetail([
       { numeros: [1, 2, 3, 4, 5], numeroChance: [1] },
@@ -84,17 +95,30 @@ describe('rankGrilles', () => {
     expect(result[1].rank).toBe(2);
   });
 
-  it('ne modifie pas le tableau de grilles original (fonction pure)', () => {
-    const grilles = [
+  it('ne modifie pas le tableau de grilles original (ordre préservé)', () => {
+    const detail = makeDetail([
       { numeros: [7, 14, 23, 31, 42], numeroChance: [3] },
       { numeros: [1, 2, 3, 4, 5], numeroChance: [1] },
-    ];
-    const detail = makeDetail([...grilles]);
+    ]);
 
     rankGrilles(detail);
 
     expect(detail.grilles[0].numeros).toEqual([7, 14, 23, 31, 42]);
     expect(detail.grilles[1].numeros).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('ne modifie pas les objets grilles originaux (aucune propriété ajoutée)', () => {
+    const grille0 = { numeros: [7, 14, 23, 31, 42], numeroChance: [3] };
+    const grille1 = { numeros: [1, 2, 3, 4, 5], numeroChance: [1] };
+    const detail = makeDetail([grille0, grille1]);
+
+    rankGrilles(detail);
+
+    // rankGrilles utilise spread (...g) — les objets originaux ne sont pas mutés
+    expect((detail.grilles[0] as Partial<GrilleRanked>).matchNumeros).toBeUndefined();
+    expect((detail.grilles[0] as Partial<GrilleRanked>).rank).toBeUndefined();
+    expect((detail.grilles[1] as Partial<GrilleRanked>).matchNumeros).toBeUndefined();
+    expect((detail.grilles[1] as Partial<GrilleRanked>).rank).toBeUndefined();
   });
 
   it('retourne [] si le détail ne contient aucune grille', () => {

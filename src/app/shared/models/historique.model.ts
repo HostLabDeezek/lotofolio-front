@@ -1,15 +1,26 @@
 /**
+ * Référence à un jeu de loterie — partagée par `PartieHistoriqueItem` et
+ * `PartieDetail` pour éviter la duplication (DRY).
+ */
+export interface Jeu {
+  id: number;
+  nom: string;
+}
+
+/**
  * Résumé d'une partie renvoyé par GET /api/parties/history (LF-38).
  * Utilisé pour alimenter l'écran « Mon historique » (liste).
+ *
+ * Note : le champ `tirageDate` correspond au nom renvoyé par l'endpoint
+ * /history. L'endpoint de détail (/parties/:id) renvoie `dateTirage` pour
+ * rester cohérent avec le modèle `Tirage` existant — c'est intentionnel.
  */
 export interface PartieHistoriqueItem {
   partieId: number;
   tirageId: number;
-  tirageDate: string; // ISO 8601
-  jeu: {
-    id: number;
-    nom: string;
-  };
+  /** ISO 8601 — nom imposé par l'endpoint GET /api/parties/history (LF-38). */
+  tirageDate: string;
+  jeu: Jeu;
 }
 
 /**
@@ -20,13 +31,11 @@ export interface PartieDetail {
   partieId: number;
   tirage: {
     id: number;
-    dateTirage: string; // ISO 8601
+    /** ISO 8601 — nommé `dateTirage` comme dans le modèle `Tirage` existant. */
+    dateTirage: string;
     numerosTires: number[];
     numeroChanceTire: number[];
-    jeu: {
-      id: number;
-      nom: string;
-    };
+    jeu: Jeu;
   };
   grilles: Array<{
     numeros: number[];
@@ -59,9 +68,11 @@ export interface GrilleRanked {
  * Fonction pure : ne modifie ni `detail` ni ses sous-objets.
  *
  * @param detail  Détail complet de la partie (LF-39)
- * @param topN    Nombre max de grilles à retourner (défaut : 5)
+ * @param topN    Nombre max de grilles à retourner (défaut : 5).
+ *                Si `topN <= 0`, toutes les grilles sont retournées.
  */
 export function rankGrilles(detail: PartieDetail, topN = 5): GrilleRanked[] {
+  const effectiveTopN = topN <= 0 ? detail.grilles.length : topN;
   const { numerosTires, numeroChanceTire } = detail.tirage;
 
   const scored = detail.grilles.map(g => ({
@@ -77,5 +88,5 @@ export function rankGrilles(detail: PartieDetail, topN = 5): GrilleRanked[] {
       : b.matchChance - a.matchChance,
   );
 
-  return scored.slice(0, topN).map((g, i) => ({ ...g, rank: i + 1 }));
+  return scored.slice(0, effectiveTopN).map((g, i) => ({ ...g, rank: i + 1 }));
 }

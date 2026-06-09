@@ -3,6 +3,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HistoriqueService } from './historique.service';
 import { PartieDetail, PartieHistoriqueItem } from '../models/historique.model';
+import { ApiError } from '../../core/errors/api-error';
 import { errorInterceptor } from '../../core/interceptors/error.interceptor';
 import { environment } from '../../../environments/environment';
 
@@ -65,13 +66,15 @@ describe('HistoriqueService', () => {
       await expectAsync(promise).toBeResolvedTo([]);
     });
 
-    it('propage les erreurs (ex. 401)', async () => {
+    it('propage les erreurs (ex. 401) en tant que ApiError', async () => {
       const promise = service.getHistory();
 
       const req = httpMock.expectOne(`${environment.apiUrl}/parties/history`);
       req.flush({ code: 'UNAUTHORIZED' }, { status: 401, statusText: 'Unauthorized' });
 
-      await expectAsync(promise).toBeRejected();
+      await expectAsync(promise).toBeRejectedWith(
+        jasmine.objectContaining({ status: 401 } satisfies Partial<ApiError>),
+      );
     });
   });
 
@@ -105,22 +108,35 @@ describe('HistoriqueService', () => {
       await expectAsync(promise).toBeResolvedTo(mockDetail);
     });
 
-    it('propage les erreurs 404 PARTIE_NOT_FOUND', async () => {
+    it('propage les erreurs 404 PARTIE_NOT_FOUND en tant que ApiError', async () => {
       const promise = service.getPartieDetail(999);
 
       const req = httpMock.expectOne(`${environment.apiUrl}/parties/999`);
       req.flush({ code: 'PARTIE_NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
-      await expectAsync(promise).toBeRejected();
+      await expectAsync(promise).toBeRejectedWith(
+        jasmine.objectContaining({ status: 404, code: 'PARTIE_NOT_FOUND' } satisfies Partial<ApiError>),
+      );
     });
 
-    it('propage les erreurs 403 FORBIDDEN', async () => {
+    it('propage les erreurs 403 FORBIDDEN en tant que ApiError', async () => {
       const promise = service.getPartieDetail(5);
 
       const req = httpMock.expectOne(`${environment.apiUrl}/parties/5`);
       req.flush({ code: 'FORBIDDEN' }, { status: 403, statusText: 'Forbidden' });
 
-      await expectAsync(promise).toBeRejected();
+      await expectAsync(promise).toBeRejectedWith(
+        jasmine.objectContaining({ status: 403, code: 'FORBIDDEN' } satisfies Partial<ApiError>),
+      );
+    });
+
+    it('rejette immédiatement si partieId est invalide, sans émettre de requête HTTP', async () => {
+      await expectAsync(service.getPartieDetail(-1)).toBeRejectedWithError(/partieId invalide/);
+      await expectAsync(service.getPartieDetail(0)).toBeRejectedWithError(/partieId invalide/);
+      await expectAsync(service.getPartieDetail(NaN)).toBeRejectedWithError(/partieId invalide/);
+      httpMock.expectNone(`${environment.apiUrl}/parties/-1`);
+      httpMock.expectNone(`${environment.apiUrl}/parties/0`);
+      httpMock.expectNone(`${environment.apiUrl}/parties/NaN`);
     });
   });
 });
