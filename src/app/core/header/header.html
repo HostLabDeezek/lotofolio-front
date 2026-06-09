@@ -9,23 +9,17 @@
       </a>
     </div>
 
-    <!-- Navigation -->
+    <!-- Navigation desktop -->
     <nav class="nav">
       <!-- Liens publics -->
       <a routerLink="/jeux" routerLinkActive="active">
         Jeux
       </a>
-      <a routerLink="/tirages" routerLinkActive="active">
-        Tirages
-      </a>
 
       <!-- Liens authentifiés -->
       @if (authService.isLoggedIn()) {
-        <a routerLink="/grilles" routerLinkActive="active">
-          Mes Grilles
-        </a>
-        <a routerLink="/resultats" routerLinkActive="active">
-          Résultats
+        <a routerLink="/historique" routerLinkActive="active">
+          Mon historique
         </a>
       }
     </nav>
@@ -52,5 +46,27 @@
         </div>
       }
     </div>
+
+    <!-- Hamburger (mobile) -->
+    <button
+      class="hamburger"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      [attr.aria-label]="menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
+
+  <!-- Navigation mobile (dropdown) -->
+  @if (menuOpen()) {
+    <nav class="mobile-nav">
+      <a routerLink="/jeux" routerLinkActive="active" (click)="closeMenu()">Jeux</a>
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/historique" routerLinkActive="active" (click)="closeMenu()">Mon historique</a>
+      }
+    </nav>
+  }
 </header>
