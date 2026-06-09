@@ -52,7 +52,7 @@
       class="hamburger"
       (click)="toggleMenu()"
       [attr.aria-expanded]="menuOpen()"
-      aria-label="Ouvrir le menu"
+      [attr.aria-label]="menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
     >
       <span></span>
       <span></span>
@@ -62,10 +62,10 @@
 
   <!-- Navigation mobile (dropdown) -->
   @if (menuOpen()) {
-    <nav class="mobile-nav" (click)="closeMenu()">
-      <a routerLink="/jeux" routerLinkActive="active">Jeux</a>
+    <nav class="mobile-nav">
+      <a routerLink="/jeux" routerLinkActive="active" (click)="closeMenu()">Jeux</a>
       @if (authService.isLoggedIn()) {
-        <a routerLink="/historique" routerLinkActive="active">Mon historique</a>
+        <a routerLink="/historique" routerLinkActive="active" (click)="closeMenu()">Mon historique</a>
       }
     </nav>
   }

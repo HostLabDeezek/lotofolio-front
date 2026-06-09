@@ -6,6 +6,7 @@
 } @else if (error()) {
   <div class="error-state">
     <p class="error-text">{{ error() }}</p>
+    <button class="retry-btn" (click)="loadHistory()">Réessayer</button>
   </div>
 } @else {
   <div class="page-header">
@@ -23,16 +24,15 @@
         <li>
           <button
             class="partie-btn"
-            [attr.data-color]="colorIndex(partie.jeu.id)"
             (click)="navigateToDetail(partie.partieId)"
-            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + formatDate(partie.tirageDate)"
+            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.tirageDate | parisDate)"
           >
             <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
               {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
             </span>
             <span class="partie-info">
               <span class="partie-nom">{{ partie.jeu.nom }}</span>
-              <span class="partie-date">{{ formatDate(partie.tirageDate) }}</span>
+              <span class="partie-date">{{ partie.tirageDate | parisDate }}</span>
             </span>
             <span class="partie-chevron" aria-hidden="true">›</span>
           </button>

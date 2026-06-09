@@ -164,6 +164,24 @@ $surface: #F2F4F8;
   animation: spin 0.7s linear infinite;
 }
 
+.retry-btn {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: vars.$blue;
+  background: transparent;
+  border: 1.5px solid vars.$blue;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: vars.$blue;
+    color: vars.$white;
+  }
+}
+
 .loading-text,
 .empty-text,
 .error-text {

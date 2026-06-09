@@ -8,6 +8,7 @@ import {
 import { Router } from '@angular/router';
 import { HistoriqueService } from '../../../shared/services/historique.service';
 import { PartieHistoriqueItem } from '../../../shared/models/historique.model';
+import { ParisDatePipe } from '../../../shared/pipes/paris-date.pipe';
 
 /**
  * Page « Mon historique » — liste des parties jouées sur les 30 derniers jours
@@ -16,7 +17,7 @@ import { PartieHistoriqueItem } from '../../../shared/models/historique.model';
  */
 @Component({
   selector: 'app-historique-list',
-  imports: [],
+  imports: [ParisDatePipe],
   templateUrl: './historique-list.html',
   styleUrl: './historique-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +30,17 @@ export class HistoriqueList implements OnInit {
   readonly error = signal<string | null>(null);
   readonly parties = signal<PartieHistoriqueItem[]>([]);
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
+    void this.loadHistory();
+  }
+
+  /**
+   * Charge l'historique des parties. Exposée publiquement pour permettre
+   * au bouton « Réessayer » de relancer le chargement après une erreur.
+   */
+  async loadHistory(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
     try {
       const result = await this.historiqueService.getHistory();
       this.parties.set(result);
@@ -45,32 +56,10 @@ export class HistoriqueList implements OnInit {
   }
 
   /**
-   * Formate une date ISO 8601 en « Mar. 3 juin — 21h00 » (heure de Paris).
-   * Cohérent avec le `tirageLabel` de la page Grille.
+   * Indice de couleur (0-5) dérivé du jeu pour la pastille.
+   * Modulo euclidien : garantit un résultat positif même si jeuId <= 0.
    */
-  formatDate(tirageDate: string): string {
-    const date = new Date(tirageDate);
-    const partsOptions: Intl.DateTimeFormatOptions = {
-      timeZone: 'Europe/Paris',
-      weekday: 'short',
-      day: 'numeric',
-      month: 'long',
-    };
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      timeZone: 'Europe/Paris',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    };
-    const datePart = new Intl.DateTimeFormat('fr-FR', partsOptions).format(date);
-    const timePart = new Intl.DateTimeFormat('fr-FR', timeOptions)
-      .format(date)
-      .replace(':', 'h');
-    return `${datePart} — ${timePart}`;
-  }
-
-  /** Indice de couleur (0-5) dérivé du jeu pour la pastille. */
   colorIndex(jeuId: number): number {
-    return (jeuId - 1) % 6;
+    return ((jeuId - 1) % 6 + 6) % 6;
   }
 }

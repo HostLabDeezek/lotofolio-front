@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { HistoriqueList } from './historique-list';
 import { HistoriqueService } from '../../../shared/services/historique.service';
 import { PartieHistoriqueItem } from '../../../shared/models/historique.model';
@@ -53,11 +52,10 @@ describe('HistoriqueList', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    const buttons = fixture.nativeElement.querySelectorAll('.partie-btn');
-    expect(buttons.length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.partie-btn').length).toBe(2);
   });
 
-  it('affiche le nom et la date de chaque partie', async () => {
+  it('affiche le nom de chaque jeu', async () => {
     mockService.getHistory.and.resolveTo(mockParties);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -75,12 +73,30 @@ describe('HistoriqueList', () => {
     expect(fixture.nativeElement.querySelector('.empty-state')).toBeTruthy();
   });
 
-  it("affiche un message d'erreur si le service échoue", async () => {
+  it("affiche un message d'erreur et un bouton Réessayer si le service échoue", async () => {
     mockService.getHistory.and.rejectWith(new Error('network error'));
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.error-state')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.retry-btn')).toBeTruthy();
+  });
+
+  it('relance le chargement au clic sur Réessayer', async () => {
+    mockService.getHistory.and.rejectWith(new Error('first fail'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Deuxième appel réussit
+    mockService.getHistory.and.resolveTo(mockParties);
+    const retryBtn = fixture.nativeElement.querySelector('.retry-btn');
+    retryBtn.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(mockService.getHistory).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelectorAll('.partie-btn').length).toBe(2);
   });
 
   it('navigue vers /historique/:id au clic sur une carte', async () => {
@@ -89,19 +105,12 @@ describe('HistoriqueList', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.partie-btn');
-    btn.click();
+    fixture.nativeElement.querySelector('.partie-btn').click();
     expect(router.navigate).toHaveBeenCalledWith(['/historique', 1]);
   });
 
-  it('formate la date avec un tiret long et une heure au format Xh00', () => {
-    const formatted = component.formatDate('2026-06-03T19:00:00.000Z');
-    expect(formatted).toContain('—');
-    expect(formatted).toMatch(/\d{1,2}h\d{2}/);
-  });
-
-  it('retourne un colorIndex entre 0 et 5', () => {
-    for (let id = 1; id <= 12; id++) {
+  it('retourne un colorIndex entre 0 et 5 pour tout jeuId', () => {
+    for (let id = 0; id <= 12; id++) {
       const index = component.colorIndex(id);
       expect(index).toBeGreaterThanOrEqual(0);
       expect(index).toBeLessThanOrEqual(5);

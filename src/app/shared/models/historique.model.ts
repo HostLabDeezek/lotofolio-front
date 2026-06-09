@@ -68,7 +68,8 @@ export interface GrilleRanked {
  * Fonction pure : ne modifie ni `detail` ni ses sous-objets.
  *
  * @param detail  Détail complet de la partie (LF-39)
- * @param topN    Nombre max de grilles à retourner (défaut : 5).
+ * @param topN    Entier max de grilles à retourner (défaut : 5). Les flottants
+ *                sont tronqués par `Array.slice` — passer un entier explicite.
  *                Si `topN <= 0`, toutes les grilles sont retournées.
  */
 export function rankGrilles(detail: PartieDetail, topN = 5): GrilleRanked[] {
