@@ -1,0 +1,43 @@
+@if (loading()) {
+  <div class="loading-state">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Chargement de l'historique…</p>
+  </div>
+} @else if (error()) {
+  <div class="error-state">
+    <p class="error-text">{{ error() }}</p>
+  </div>
+} @else {
+  <div class="page-header">
+    <h1 class="page-title">Mon historique</h1>
+    <p class="page-subtitle">Parties des 30 derniers jours</p>
+  </div>
+
+  @if (parties().length === 0) {
+    <div class="empty-state">
+      <p class="empty-text">Vous n'avez joué aucune partie ce mois-ci.</p>
+    </div>
+  } @else {
+    <ul class="parties-list">
+      @for (partie of parties(); track partie.partieId) {
+        <li>
+          <button
+            class="partie-btn"
+            [attr.data-color]="colorIndex(partie.jeu.id)"
+            (click)="navigateToDetail(partie.partieId)"
+            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + formatDate(partie.tirageDate)"
+          >
+            <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
+              {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
+            </span>
+            <span class="partie-info">
+              <span class="partie-nom">{{ partie.jeu.nom }}</span>
+              <span class="partie-date">{{ formatDate(partie.tirageDate) }}</span>
+            </span>
+            <span class="partie-chevron" aria-hidden="true">›</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+}
