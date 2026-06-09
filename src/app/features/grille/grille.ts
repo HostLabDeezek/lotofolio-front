@@ -184,9 +184,7 @@ export class Grille implements OnInit, OnDestroy {
 
   /** Invite à compléter, tant que la page est active mais qu'une grille manque. */
   readonly submitHint = computed<string | null>(() =>
-    !this.disabled() && !this.allComplete()
-      ? 'Complétez toutes vos grilles pour valider'
-      : null,
+    !this.disabled() && !this.allComplete() ? 'Complétez toutes vos grilles pour valider' : null,
   );
 
   /** Libellé du tirage en cours, ex. « Tirage du 11 mai 2026 à 20h00 » (heure de Paris). */
@@ -271,8 +269,10 @@ export class Grille implements OnInit, OnDestroy {
    * Après l'heure du tirage (≥ 20h), recharge le tirage en cours pour basculer
    * sur celui du lendemain dès qu'il est créé. Pendant la fenêtre de cutoff
    * (19h54→20h) le blocage reste local (MEMO §3). On ne marque le tirage comme
-   * rechargé qu'en cas de succès : un échec réseau est réessayé au tick suivant,
-   * et `closed()` garde la saisie fermée tant que ce tirage n'est pas remplacé.
+   * rechargé que lorsque le back renvoie réellement un tirage différent : tant
+   * qu'il retourne le même (le suivant n'est pas encore créé) ou en cas d'échec
+   * réseau, on retentera au tick suivant. `closed()` garde la saisie fermée tant
+   * que ce tirage n'est pas remplacé.
    */
   private async maybeReloadAfterDraw(): Promise<void> {
     const tirage = this.tirage();
@@ -286,8 +286,13 @@ export class Grille implements OnInit, OnDestroy {
     this.reloadInFlight = true;
     try {
       const next = await this.tirageService.getCurrentTirage(tirage.jeuId);
-      this.reloadedAtDrawFor = tirage.id;
-      this.tirage.set(next);
+      if (next?.id !== tirage.id) {
+        // Tirage suivant (ou plus aucun tirage) : on bascule et on évite de
+        // recharger ce tirage à nouveau. Si le back renvoie le même, on laisse
+        // `reloadedAtDrawFor` inchangé pour réessayer au prochain tick.
+        this.reloadedAtDrawFor = tirage.id;
+        this.tirage.set(next);
+      }
     } catch {
       // Échec réseau : on réessaiera au prochain tick ; la saisie reste fermée.
     } finally {

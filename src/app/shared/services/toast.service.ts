@@ -21,6 +21,9 @@ export class ToastService {
   private nextId = 0;
   private readonly _toasts = signal<Toast[]>([]);
 
+  /** Timers de disparition automatique, indexés par id, pour les annuler au dismiss. */
+  private readonly _timers = new Map<number, ReturnType<typeof setTimeout>>();
+
   /** Liste lue par le composant d'affichage. */
   readonly toasts = this._toasts.asReadonly();
 
@@ -32,8 +35,13 @@ export class ToastService {
     this.push('error', message);
   }
 
-  /** Retire manuellement un toast (clic sur la croix). */
+  /** Retire manuellement un toast (clic sur la croix) et annule son timer. */
   dismiss(id: number): void {
+    const timer = this._timers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this._timers.delete(id);
+    }
     this._toasts.update((list) => list.filter((t) => t.id !== id));
   }
 
@@ -41,9 +49,13 @@ export class ToastService {
     const id = this.nextId++;
     this._toasts.update((list) => [...list, { id, kind, message }]);
     // `setTimeout` n'existe pas côté serveur de rendu ; les toasts sont de
-    // toute façon déclenchés par une interaction, donc côté navigateur.
+    // toute façon déclenchés par une interaction, donc côté navigateur. On garde
+    // une référence au timer pour le purger si l'utilisateur ferme avant l'échéance.
     if (typeof setTimeout !== 'undefined') {
-      setTimeout(() => this.dismiss(id), ToastService.DISMISS_MS);
+      this._timers.set(
+        id,
+        setTimeout(() => this.dismiss(id), ToastService.DISMISS_MS),
+      );
     }
   }
 }
