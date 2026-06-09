@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { errorInterceptor } from './error.interceptor';
+import { ApiError } from '../errors/api-error';
 
 describe('errorInterceptor', () => {
   let http: HttpClient;
@@ -43,6 +44,39 @@ describe('errorInterceptor', () => {
     });
 
     controller.expectOne('/api/test').flush({}, { status: 500, statusText: 'Server Error' });
+  });
+
+  it('normalise une erreur métier { code, message } en ApiError', (done) => {
+    http.get('/api/test').subscribe({
+      error: (err: ApiError) => {
+        expect(err).toEqual(jasmine.any(ApiError));
+        expect(err.status).toBe(409);
+        expect(err.code).toBe('CUTOFF_PASSED');
+        expect(err.message).toBe('La saisie est fermée');
+        expect(err.details).toBeNull();
+        done();
+      },
+    });
+
+    controller.expectOne('/api/test').flush(
+      { code: 'CUTOFF_PASSED', message: 'La saisie est fermée' },
+      { status: 409, statusText: 'Conflict' },
+    );
+  });
+
+  it('expose les details d’un INVALID_PAYLOAD (Zod)', (done) => {
+    http.get('/api/test').subscribe({
+      error: (err: ApiError) => {
+        expect(err.code).toBe('INVALID_PAYLOAD');
+        expect(err.details).toEqual([{ field: 'grilles', message: 'requis' }]);
+        done();
+      },
+    });
+
+    controller.expectOne('/api/test').flush(
+      { code: 'INVALID_PAYLOAD', details: [{ field: 'grilles', message: 'requis' }] },
+      { status: 400, statusText: 'Bad Request' },
+    );
   });
 
   it('laisse passer les réponses sans erreur', (done) => {

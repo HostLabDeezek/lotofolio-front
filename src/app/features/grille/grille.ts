@@ -1,24 +1,32 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  NgZone,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Jeu } from '../../shared/models/jeu.model';
 import {
+  CUTOFF_MARGIN_MIN,
   GrilleDraft,
   GrilleLocalState,
   isGrilleComplete,
   MAX_GRILLES,
+  PlayPayload,
   Tirage,
 } from '../../shared/models/grille.model';
 import { JeuStore } from '../../shared/stores/jeu.store';
 import { TirageService } from '../../shared/services/tirage.service';
+import { PartieService } from '../../shared/services/partie.service';
 import { FlashService } from '../../shared/services/flash.service';
+import { ToastService } from '../../shared/services/toast.service';
+import { ApiError } from '../../core/errors/api-error';
 import { GrilleCard } from './grille-card/grille-card';
 
 /** Étape de révélation d'un numéro pendant l'animation de flash. */
@@ -27,6 +35,12 @@ interface RevealStep {
   kind: 'numero' | 'chance';
   value: number;
 }
+
+/** Fenêtre, en ms, pendant laquelle le compte à rebours s'affiche avant le cutoff. */
+const COUNTDOWN_WINDOW_MS = 60 * 60 * 1000;
+
+/** Période de rafraîchissement de l'horloge locale (cutoff / compte à rebours). */
+const CLOCK_TICK_MS = 30 * 1000;
 
 @Component({
   selector: 'app-grille',
@@ -39,7 +53,11 @@ export class Grille implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly jeuStore = inject(JeuStore);
   private readonly tirageService = inject(TirageService);
+  private readonly partieService = inject(PartieService);
   private readonly flashService = inject(FlashService);
+  private readonly toast = inject(ToastService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly zone = inject(NgZone);
 
   /** Délai entre deux numéros allumés pendant l'animation (ms). */
   private readonly animationIntervalMs = 150;
@@ -47,10 +65,28 @@ export class Grille implements OnInit, OnDestroy {
   /** Timer de l'animation en cours, pour pouvoir l'arrêter/nettoyer. */
   private animationTimer: ReturnType<typeof setInterval> | null = null;
 
+  /** Horloge locale (cutoff / compte à rebours), rafraîchie toutes les 30 s. */
+  private clockTimer: ReturnType<typeof setInterval> | null = null;
+
+  /** Id du tirage déjà rechargé après son heure, pour ne pas spammer une fois remplacé. */
+  private reloadedAtDrawFor: number | null = null;
+
+  /** Rechargement post-tirage en cours, pour ne pas empiler les requêtes. */
+  private reloadInFlight = false;
+
   readonly jeu = signal<Jeu | null>(null);
   readonly tirage = signal<Tirage | null>(null);
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
+
+  /** Horodatage courant (ms) ; piloté par `clockTimer` côté navigateur. */
+  readonly now = signal<number>(Date.now());
+
+  /** Soumission en cours : verrouille le bouton « Valider ». */
+  readonly submitting = signal<boolean>(false);
+
+  /** Message d'erreur de soumission affiché en tête de page ; null si aucun. */
+  readonly submitError = signal<string | null>(null);
 
   /** Liste des grilles composées simultanément ; une grille vide au départ. */
   readonly grilles = signal<GrilleLocalState[]>([this.emptyGrille()]);
@@ -64,8 +100,50 @@ export class Grille implements OnInit, OnDestroy {
   /** Animation de flash en cours : verrouille les grilles et la barre de flash. */
   readonly animating = signal<boolean>(false);
 
-  /** Les grilles sont désactivées tant qu'aucun tirage n'est en cours. */
-  readonly disabled = computed<boolean>(() => this.tirage() === null);
+  /** Heure (ms) du tirage en cours, ou `null`. */
+  private readonly drawAt = computed<number | null>(() => {
+    const tirage = this.tirage();
+    return tirage ? new Date(tirage.dateTirage).getTime() : null;
+  });
+
+  /** Heure limite de saisie (ms) = heure du tirage − marge de cutoff. */
+  private readonly cutoffAt = computed<number | null>(() => {
+    const draw = this.drawAt();
+    return draw === null ? null : draw - CUTOFF_MARGIN_MIN * 60 * 1000;
+  });
+
+  /**
+   * La saisie est fermée dès que le cutoff est franchi, et le reste tant que ce
+   * tirage n'est pas remplacé par le suivant (cf. `maybeReloadAfterDraw`). Sans
+   * borne supérieure : passé l'heure du tirage, on ne doit pas rouvrir la saisie
+   * sur un tirage déjà tiré si le rechargement tarde ou échoue.
+   */
+  readonly closed = computed<boolean>(() => {
+    const cutoff = this.cutoffAt();
+    return cutoff !== null && this.now() >= cutoff;
+  });
+
+  /** Les grilles sont désactivées sans tirage en cours ou une fois le cutoff franchi. */
+  readonly disabled = computed<boolean>(() => this.tirage() === null || this.closed());
+
+  /** Heure limite affichée en tête de page, ex. « Saisie possible jusqu'à 19h54. ». */
+  readonly cutoffLabel = computed<string | null>(() => {
+    const cutoff = this.cutoffAt();
+    return cutoff === null ? null : `Saisie possible jusqu'à ${this.formatParisTime(cutoff)}.`;
+  });
+
+  /** Compte à rebours discret dans la dernière heure avant le cutoff ; null sinon. */
+  readonly countdownLabel = computed<string | null>(() => {
+    const cutoff = this.cutoffAt();
+    if (cutoff === null) {
+      return null;
+    }
+    const remaining = cutoff - this.now();
+    if (remaining <= 0 || remaining > COUNTDOWN_WINDOW_MS) {
+      return null;
+    }
+    return `Il vous reste ${Math.ceil(remaining / (60 * 1000))} min`;
+  });
 
   /** Saisie de flash invalide (hors 1..5 ou non entière). */
   readonly flashCountInvalid = computed<boolean>(() => {
@@ -89,6 +167,26 @@ export class Grille implements OnInit, OnDestroy {
   /** On ne peut pas supprimer la dernière grille restante. */
   readonly canRemoveGrille = computed<boolean>(() => this.grilles().length > 1);
 
+  /** Toutes les grilles sont complètes (quotas du jeu atteints partout). */
+  readonly allComplete = computed<boolean>(() => {
+    const jeu = this.jeu();
+    if (!jeu) {
+      return false;
+    }
+    const list = this.grilles();
+    return list.length > 0 && list.every((g) => isGrilleComplete(g, jeu));
+  });
+
+  /** « Valider » est actif quand tout est complet et que rien ne bloque la page. */
+  readonly canSubmit = computed<boolean>(
+    () => this.allComplete() && !this.disabled() && !this.animating() && !this.submitting(),
+  );
+
+  /** Invite à compléter, tant que la page est active mais qu'une grille manque. */
+  readonly submitHint = computed<string | null>(() =>
+    !this.disabled() && !this.allComplete() ? 'Complétez toutes vos grilles pour valider' : null,
+  );
+
   /** Libellé du tirage en cours, ex. « Tirage du 11 mai 2026 à 20h00 » (heure de Paris). */
   readonly tirageLabel = computed<string | null>(() => {
     const tirage = this.tirage();
@@ -102,16 +200,20 @@ export class Grille implements OnInit, OnDestroy {
       month: 'long',
       year: 'numeric',
     }).format(date);
-    const heure = new Intl.DateTimeFormat('fr-FR', {
+    return `Tirage du ${jour} à ${this.formatParisTime(date.getTime())}`;
+  });
+
+  /** Formate un horodatage (ms) en heure de Paris, ex. « 19h54 ». */
+  private formatParisTime(ms: number): string {
+    return new Intl.DateTimeFormat('fr-FR', {
       timeZone: 'Europe/Paris',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
     })
-      .format(date)
+      .format(new Date(ms))
       .replace(':', 'h');
-    return `Tirage du ${jour} à ${heure}`;
-  });
+  }
 
   async ngOnInit(): Promise<void> {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -135,6 +237,66 @@ export class Grille implements OnInit, OnDestroy {
       this.error.set('Impossible de charger le jeu');
     } finally {
       this.loading.set(false);
+    }
+
+    this.startClock();
+  }
+
+  /**
+   * Démarre l'horloge locale (cutoff / compte à rebours), rafraîchie toutes les
+   * 30 s. Inerte au rendu serveur (pas de timer ni de polling côté SSR).
+   */
+  private startClock(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.tick();
+    // Hors zone Angular : un timer périodique dans la zone empêcherait toute
+    // stabilisation (tests `whenStable`, SSR). L'écriture du signal `now`
+    // déclenche malgré tout la détection de changement (signaux Angular 21).
+    this.zone.runOutsideAngular(() => {
+      this.clockTimer = setInterval(() => this.tick(), CLOCK_TICK_MS);
+    });
+  }
+
+  /** Met l'horloge à jour et recharge le tirage une fois son heure passée. */
+  private tick(): void {
+    this.now.set(Date.now());
+    void this.maybeReloadAfterDraw();
+  }
+
+  /**
+   * Après l'heure du tirage (≥ 20h), recharge le tirage en cours pour basculer
+   * sur celui du lendemain dès qu'il est créé. Pendant la fenêtre de cutoff
+   * (19h54→20h) le blocage reste local (MEMO §3). On ne marque le tirage comme
+   * rechargé que lorsque le back renvoie réellement un tirage différent : tant
+   * qu'il retourne le même (le suivant n'est pas encore créé) ou en cas d'échec
+   * réseau, on retentera au tick suivant. `closed()` garde la saisie fermée tant
+   * que ce tirage n'est pas remplacé.
+   */
+  private async maybeReloadAfterDraw(): Promise<void> {
+    const tirage = this.tirage();
+    const draw = this.drawAt();
+    if (!tirage || draw === null || this.now() < draw) {
+      return;
+    }
+    if (this.reloadedAtDrawFor === tirage.id || this.reloadInFlight) {
+      return;
+    }
+    this.reloadInFlight = true;
+    try {
+      const next = await this.tirageService.getCurrentTirage(tirage.jeuId);
+      if (next?.id !== tirage.id) {
+        // Tirage suivant (ou plus aucun tirage) : on bascule et on évite de
+        // recharger ce tirage à nouveau. Si le back renvoie le même, on laisse
+        // `reloadedAtDrawFor` inchangé pour réessayer au prochain tick.
+        this.reloadedAtDrawFor = tirage.id;
+        this.tirage.set(next);
+      }
+    } catch {
+      // Échec réseau : on réessaiera au prochain tick ; la saisie reste fermée.
+    } finally {
+      this.reloadInFlight = false;
     }
   }
 
@@ -248,6 +410,69 @@ export class Grille implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopAnimation();
+    if (this.clockTimer !== null) {
+      clearInterval(this.clockTimer);
+      this.clockTimer = null;
+    }
+  }
+
+  /**
+   * Soumet toutes les grilles en un seul `POST /api/parties` (LF-31).
+   * Succès → toast + réinitialisation à une grille vide (on reste sur la page).
+   * Échec → message mappé en tête de page, sans réinitialiser (l'utilisateur
+   * garde ses grilles pour corriger).
+   */
+  async submit(): Promise<void> {
+    const tirageId = this.tirageId();
+    if (!this.canSubmit() || tirageId === null) {
+      return;
+    }
+
+    const payload: PlayPayload = {
+      tirageId,
+      grilles: this.grilles().map((g) => ({
+        numeros: g.selectedNumeros,
+        numeroChance: g.selectedNumeroChance,
+      })),
+    };
+
+    this.submitError.set(null);
+    this.submitting.set(true);
+    try {
+      await this.partieService.playGrilles(payload);
+      this.toast.success('Grille(s) enregistrée(s) avec succès');
+      this.resetComposition();
+    } catch (error) {
+      this.submitError.set(this.mapSubmitError(error));
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  /** Remet la page à son état initial : une grille vide, un flash, animation arrêtée. */
+  private resetComposition(): void {
+    this.stopAnimation();
+    this.grilles.set([this.emptyGrille()]);
+    this.flashCount.set(1);
+    this.submitError.set(null);
+  }
+
+  /** Mappe une erreur back (`ApiError.code`) vers un message utilisateur (MEMO §2). */
+  private mapSubmitError(error: unknown): string {
+    if (error instanceof ApiError) {
+      switch (error.code) {
+        case 'INVALID_PAYLOAD':
+          return 'Données invalides, vérifiez vos grilles.';
+        case 'INVALID_GRILLE':
+          return 'Une de vos grilles est invalide (ou deux grilles sont identiques).';
+        case 'TIRAGE_NOT_FOUND':
+          return "Le tirage n'est plus disponible, rechargez la page.";
+        case 'CUTOFF_PASSED':
+          return 'La saisie est fermée pour ce tirage.';
+      }
+    }
+    // 500 (corps `{ error }`, sans `code`) et cas imprévus.
+    return 'Une erreur est survenue, réessayez plus tard.';
   }
 
   /**
