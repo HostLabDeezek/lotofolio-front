@@ -33,8 +33,10 @@
       <strong>Signals</strong>), tandis que la logique métier et la base de données s'appuient sur
       <strong>Node.js</strong> et <strong>PostgreSQL</strong>. J'aborde ce projet avec la même rigueur qu'en entreprise
       : sécurité et stabilité passent avant tout. Au-delà de la base technique (authentification, structure des
-      données, architecture front/back), le cœur du jeu est désormais en place côté back-end : tirages planifiés,
-      récupération du tirage courant et soumission de grilles, le tout couvert par des tests automatisés.
+      données, architecture front/back), le cœur du jeu est désormais jouable de bout en bout : côté back, les
+      tirages sont planifiés, le tirage courant est exposé et les grilles validées ; côté front, vous pouvez
+      composer jusqu'à cinq grilles (à la main ou en flash) et les soumettre. Le tout est couvert par des tests
+      automatisés, front et back.
     </p>
   </div>
 
@@ -55,7 +57,7 @@
         moteur de jeu est maintenant exposé côté API :
         <code>GET /jeux/:id/current-tirage</code> (tirage du jour jouable) et
         <code>POST /parties</code> (validation d'une ou plusieurs grilles). Les écrans
-        front correspondants sont la prochaine étape.
+        front correspondants sont désormais en place : voir le parcours ci-dessous.
       </p>
     </div>
   </div>
@@ -116,16 +118,24 @@
     </p>
   </app-recruiter-step>
 
-  <app-recruiter-step number="3" icon="construction" title="Le moteur de jeu (back-end opérationnel, branchement front en cours)">
+  <app-recruiter-step number="3" icon="casino" title="Composer et valider vos grilles">
     <p>
-      Côté serveur, jouer une grille est déjà fonctionnel et testé. Un job planifié
-      génère les tirages et exécute le tirage du jour ; l'API expose le tirage courant
-      avec une <strong>fenêtre de fermeture</strong> (on ne peut plus jouer dans les
-      dernières minutes avant le tirage). La soumission d'une partie se fait en une
-      seule <strong>transaction atomique et idempotente</strong> : un même joueur ne
-      peut pas créer de doublon sur un tirage, chaque grille est validée (nombre de
-      numéros, plages autorisées, doublons) avant l'enregistrement. Il reste à câbler
-      les écrans pour composer une grille et consulter les résultats.
+      Depuis la liste, ouvrez un jeu : la page de grille charge le
+      <strong>tirage du jour</strong> (<code>GET /jeux/:id/current-tirage</code>) et
+      vous laisse composer <strong>jusqu'à cinq grilles</strong> à la fois. Chaque
+      grille se remplit à la main (numéros + numéro chance, dans les quotas du jeu) ou
+      via le <strong>Flash</strong> : un tirage aléatoire révélé avec une petite
+      animation, pour 1 à 5 grilles d'un coup. Quand tout est complet, « Valider »
+      envoie l'ensemble en une seule requête <code>POST /parties</code> ; un
+      <strong>toast</strong> confirme l'enregistrement et la page se réinitialise.
+    </p>
+    <p>
+      La saisie respecte la <strong>fenêtre de fermeture</strong> du back : une horloge
+      locale affiche l'heure limite (ex. « jusqu'à 19h54 ») puis un compte à rebours
+      dans la dernière heure ; passé le cutoff, la composition se verrouille et bascule
+      automatiquement sur le tirage suivant dès qu'il est créé. Les erreurs métier du
+      back (grille invalide, doublon, cutoff dépassé…) sont remontées en messages
+      clairs en tête de page.
     </p>
   </app-recruiter-step>
 
@@ -140,12 +150,13 @@
     </p>
     <div class="parcours-card__body">
       <p>
-        Aujourd'hui, l'utilisateur connecté accède au header (avec son nom + bouton de
-        déconnexion) et à la liste des jeux disponibles. Le bouton de déconnexion
-        purge le token, vide le signal <code>user</code> du <code>AuthService</code>
-        et redirige vers <code>/login</code>. Toute requête HTTP qui revient en
-        <strong>401</strong> (token expiré, par exemple) déclenche le même flux
-        automatiquement via l'<code>authInterceptor</code>.
+        L'utilisateur connecté accède au header (nom + bouton de déconnexion) et à la
+        <strong>liste des jeux</strong> disponibles. Chaque jeu mène à sa page de
+        grille, où il compose et valide ses grilles (voir l'étape 3). Le bouton de
+        déconnexion purge le token, vide le signal <code>user</code> du
+        <code>AuthService</code> et redirige vers <code>/login</code>. Toute requête
+        HTTP qui revient en <strong>401</strong> (token expiré, par exemple) déclenche
+        le même flux automatiquement via l'<code>authInterceptor</code>.
       </p>
     </div>
   </mat-card>
@@ -212,8 +223,20 @@
     <li>
       <strong>Deux HTTP interceptors</strong> :
       <code>authInterceptor</code> (Bearer auto + auto-logout sur 401) et
-      <code>errorInterceptor</code> (normalisation des messages d'erreur API en une
-      forme unique côté UI).
+      <code>errorInterceptor</code> qui normalise toute erreur API en une
+      <code>ApiError</code> unique (status + code + message + détails), mappée en
+      messages utilisateur côté écran.
+    </li>
+    <li>
+      <strong>Page de jeu en signaux dérivés</strong> : composition multi-grilles,
+      flash animé, fenêtre de cutoff et compte à rebours pilotés par des
+      <code>computed()</code> en <code>OnPush</code> ; l'horloge tourne
+      <code>runOutsideAngular</code> pour ne pas gêner la stabilisation (tests / SSR).
+    </li>
+    <li>
+      <strong>Notifications éphémères</strong> via un <code>ToastService</code> signal
+      (pile de toasts auto-dismiss, sans dépendance DOM) monté une fois dans le
+      <code>Layout</code>.
     </li>
     <li>
       <strong>SSR-safe</strong> : tous les accès <code>localStorage</code> sont
@@ -278,11 +301,10 @@
 
   <p class="section-lead"><strong>Limites assumées</strong></p>
   <ul class="tech-list tech-list--limits">
-    <li>Pas de tests automatisés (front et back) — le plus gros gap, conscient.</li>
     <li>Pas de refresh token (JWT 7 jours unique, pas de révocation côté serveur).</li>
     <li>RBAC pas encore actif (enum <code>Role</code> prêt en base, middleware à venir).</li>
-    <li>Pas de CI (pas de GitHub Actions configuré).</li>
-    <li>Endpoints Grilles / Tirages / Parties / Resultats à implémenter.</li>
+    <li>Pas de CI de tests/build (seul un workflow de revue automatisée est branché).</li>
+    <li>Consultation des résultats et historique des parties pas encore exposés côté front.</li>
   </ul>
 
   <hr class="divider" />

@@ -59,6 +59,42 @@
   }
 }
 
+.grille__cutoff {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  color: vars.$text-muted;
+  margin: 0.4rem 0 0;
+}
+
+.grille__countdown {
+  font-weight: 600;
+  color: vars.$gold;
+}
+
+// Bandeaux en tête de page (fermeture cutoff / erreur de soumission)
+
+.banner {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  &--closed {
+    background: rgba(vars.$gold, 0.14);
+    border: 1px solid rgba(vars.$gold, 0.4);
+    color: vars.$text-dark;
+  }
+
+  &--error {
+    background: rgba(vars.$danger, 0.1);
+    border: 1px solid rgba(vars.$danger, 0.35);
+    color: vars.$danger;
+  }
+}
+
 // Barre de flash (input + bouton)
 
 .flash {
@@ -118,20 +154,26 @@
   }
 }
 
+// Primitives communes à tous les boutons d'action.
+.flash__button,
+.grille__add,
+.grille__validate {
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
 .flash__button {
   padding: 0.6rem 1.5rem;
-  border: none;
   border-radius: 10px;
   background: vars.$gold;
   color: vars.$navy;
   font-family: 'Sora', sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    background 0.12s ease,
-    box-shadow 0.12s ease;
   box-shadow: 0 4px 12px rgba(vars.$gold, 0.3);
 
   &:hover:not(:disabled) {
@@ -142,13 +184,16 @@
     outline: 2px solid vars.$blue;
     outline-offset: 3px;
   }
+}
 
-  &:disabled {
-    background: vars.$text-muted;
-    opacity: 0.4;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
+// État désactivé commun aux boutons d'action (flash, ajout, validation).
+.flash__button:disabled,
+.grille__add:disabled,
+.grille__validate:disabled {
+  background: vars.$text-muted;
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .flash__error {
@@ -168,12 +213,29 @@
   gap: 1.25rem;
 }
 
-// Actions (bouton « + »)
+// Actions (bouton « + » et validation)
 
-.grille__actions {
+.grille__actions,
+.grille__submit {
   display: flex;
   justify-content: center;
+}
+
+.grille__actions {
   margin-top: 1.5rem;
+}
+
+// Boutons d'action bleus (ajout « + » et validation) : base commune.
+.grille__add,
+.grille__validate {
+  background: vars.$blue;
+  color: vars.$white;
+  box-shadow: 0 4px 12px rgba(vars.$blue, 0.3);
+
+  &:hover:not(:disabled) {
+    background: vars.$blue-hover;
+    transform: translateY(-2px);
+  }
 }
 
 .grille__add {
@@ -182,34 +244,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
   border-radius: 50%;
-  background: vars.$blue;
-  color: vars.$white;
   font-size: 2rem;
   line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(vars.$blue, 0.3);
-  transition:
-    transform 0.12s ease,
-    background 0.12s ease,
-    box-shadow 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: vars.$blue-hover;
-    transform: translateY(-2px);
-  }
 
   &:focus-visible {
     outline: 2px solid vars.$blue;
     outline-offset: 3px;
   }
+}
 
-  &:disabled {
-    background: vars.$text-muted;
-    opacity: 0.4;
-    cursor: not-allowed;
-    box-shadow: none;
+// Soumission (« Valider mes grilles »)
+
+.grille__submit-hint {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$text-muted;
+}
+
+.grille__submit {
+  margin-top: 1rem;
+}
+
+.grille__validate {
+  padding: 0.85rem 2.25rem;
+  border-radius: 12px;
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+
+  &:focus-visible {
+    outline: 2px solid vars.$gold;
+    outline-offset: 3px;
   }
 }
 

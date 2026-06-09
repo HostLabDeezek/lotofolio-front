@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TirageService } from './tirage.service';
 import { Tirage } from '../models/grille.model';
+import { errorInterceptor } from '../../core/interceptors/error.interceptor';
 import { environment } from '../../../environments/environment';
 
 describe('TirageService', () => {
@@ -11,7 +12,13 @@ describe('TirageService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [TirageService, provideHttpClient(), provideHttpClientTesting()],
+      // L'errorInterceptor normalise les erreurs en `ApiError` : le service en
+      // dépend, on le branche donc comme en production.
+      providers: [
+        TirageService,
+        provideHttpClient(withInterceptors([errorInterceptor])),
+        provideHttpClientTesting(),
+      ],
     });
     service = TestBed.inject(TirageService);
     httpMock = TestBed.inject(HttpTestingController);

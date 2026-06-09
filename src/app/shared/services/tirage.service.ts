@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Tirage } from '../models/grille.model';
+import { ApiError } from '../../core/errors/api-error';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -22,7 +23,9 @@ export class TirageService {
       );
       return tirage ?? null;
     } catch (error) {
-      if (error instanceof HttpErrorResponse && (error.status === 404 || error.status === 400)) {
+      // L'errorInterceptor normalise toute erreur HTTP en `ApiError` : on lit
+      // donc `status` ici, et non plus `instanceof HttpErrorResponse`.
+      if (error instanceof ApiError && (error.status === 404 || error.status === 400)) {
         return null;
       }
       throw error;

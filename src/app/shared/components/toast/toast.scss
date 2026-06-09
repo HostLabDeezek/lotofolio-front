@@ -1,0 +1,71 @@
+@use 'variables' as vars;
+
+.toast-host {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: min(360px, calc(100vw - 2rem));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: vars.$white;
+  border-left: 4px solid vars.$blue;
+  box-shadow: 0 8px 24px rgba(vars.$navy, 0.18);
+  font-family: 'Sora', sans-serif;
+  animation: toast-in 0.18s ease;
+
+  &--success {
+    border-left-color: #16a34a;
+  }
+
+  &--error {
+    border-left-color: vars.$danger;
+  }
+}
+
+.toast__message {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: vars.$text-dark;
+  line-height: 1.4;
+}
+
+.toast__close {
+  border: none;
+  background: none;
+  color: vars.$text-muted;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: vars.$text-dark;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -25,7 +25,24 @@
       Aucun tirage disponible actuellement, revenez plus tard.
     </p>
     }
+
+    @if (cutoffLabel(); as cutoff) {
+    <p class="grille__cutoff">
+      {{ cutoff }}
+      @if (countdownLabel(); as countdown) {
+      <span class="grille__countdown">· {{ countdown }}</span>
+      }
+    </p>
+    }
   </header>
+
+  @if (closed()) {
+  <div class="banner banner--closed" role="status">
+    La saisie est fermée pour le tirage de ce soir. Le prochain tirage ouvrira à 20h.
+  </div>
+  } @if (submitError(); as message) {
+  <div class="banner banner--error" role="alert">{{ message }}</div>
+  }
 
   <div class="flash" [class.flash--disabled]="disabled()">
     <div class="flash__field">
@@ -82,6 +99,21 @@
       (click)="addGrille()"
     >
       <span aria-hidden="true">+</span>
+    </button>
+  </div>
+
+  @if (submitHint(); as hint) {
+  <p class="grille__submit-hint">{{ hint }}</p>
+  }
+
+  <div class="grille__submit">
+    <button
+      type="button"
+      class="grille__validate"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+    >
+      {{ submitting() ? 'Enregistrement…' : 'Valider mes grilles' }}
     </button>
   </div>
 </section>
