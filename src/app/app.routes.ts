@@ -14,6 +14,20 @@ export const routes: Routes = [
         path: 'jeux/:id/grille',
         loadComponent: () => import('./features/grille/grille').then(m => m.Grille),
       },
+      {
+        path: 'historique',
+        loadComponent: () =>
+          import('./features/historique/historique-list/historique-list').then(
+            m => m.HistoriqueList,
+          ),
+      },
+      {
+        path: 'historique/:id',
+        loadComponent: () =>
+          import('./features/historique/historique-detail/historique-detail').then(
+            m => m.HistoriqueDetail,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '/jeux' },
