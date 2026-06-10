@@ -21,6 +21,13 @@ export const routes: Routes = [
             m => m.HistoriqueList,
           ),
       },
+      {
+        path: 'historique/:id',
+        loadComponent: () =>
+          import('./features/historique/historique-detail/historique-detail').then(
+            m => m.HistoriqueDetail,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '/jeux' },

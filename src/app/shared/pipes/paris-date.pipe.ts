@@ -5,7 +5,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * (heure de Paris). Les formateurs `Intl.DateTimeFormat` sont des singletons
  * statiques — instanciés une seule fois pour toute la durée de vie de l'app.
  *
- * Usage : `{{ partie.tirageDate | parisDate }}`
+ * Usage : `{{ partie.dateTirage | parisDate }}`
  */
 @Pipe({ name: 'parisDate', pure: true, standalone: true })
 export class ParisDatePipe implements PipeTransform {
