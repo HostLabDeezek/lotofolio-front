@@ -37,13 +37,13 @@ describe('HistoriqueService', () => {
         {
           partieId: 1,
           tirageId: 10,
-          tirageDate: '2026-06-03T19:00:00.000Z',
+          dateTirage: '2026-06-03T19:00:00.000Z',
           jeu: { id: 1, nom: 'EuroMillions' },
         },
         {
           partieId: 2,
           tirageId: 11,
-          tirageDate: '2026-05-31T18:30:00.000Z',
+          dateTirage: '2026-05-31T18:30:00.000Z',
           jeu: { id: 2, nom: 'Loto' },
         },
       ];

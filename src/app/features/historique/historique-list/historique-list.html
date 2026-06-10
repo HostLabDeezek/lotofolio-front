@@ -25,14 +25,14 @@
           <button
             class="partie-btn"
             (click)="navigateToDetail(partie.partieId)"
-            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.tirageDate | parisDate)"
+            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.dateTirage | parisDate)"
           >
             <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
               {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
             </span>
             <span class="partie-info">
               <span class="partie-nom">{{ partie.jeu.nom }}</span>
-              <span class="partie-date">{{ partie.tirageDate | parisDate }}</span>
+              <span class="partie-date">{{ partie.dateTirage | parisDate }}</span>
             </span>
             <span class="partie-chevron" aria-hidden="true">›</span>
           </button>
