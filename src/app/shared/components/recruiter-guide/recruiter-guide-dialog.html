@@ -35,8 +35,8 @@
       : sécurité et stabilité passent avant tout. Au-delà de la base technique (authentification, structure des
       données, architecture front/back), le cœur du jeu est désormais jouable de bout en bout : côté back, les
       tirages sont planifiés, le tirage courant est exposé et les grilles validées ; côté front, vous pouvez
-      composer jusqu'à cinq grilles (à la main ou en flash) et les soumettre. Le tout est couvert par des tests
-      automatisés, front et back.
+      composer jusqu'à cinq grilles (à la main ou en flash), les soumettre, puis consulter l'historique complet
+      de vos parties avec le classement de vos grilles. Le tout est couvert par des tests automatisés, front et back.
     </p>
   </div>
 
@@ -55,8 +55,10 @@
       <p class="callout__body">
         Côté périmètre, en plus de <code>/auth</code> et <code>GET /jeux</code>, le
         moteur de jeu est maintenant exposé côté API :
-        <code>GET /jeux/:id/current-tirage</code> (tirage du jour jouable) et
-        <code>POST /parties</code> (validation d'une ou plusieurs grilles). Les écrans
+        <code>GET /jeux/:id/current-tirage</code> (tirage du jour jouable),
+        <code>POST /parties</code> (validation d'une ou plusieurs grilles),
+        <code>GET /parties/history</code> (historique des parties) et
+        <code>GET /parties/:id</code> (détail d'une partie). Les écrans
         front correspondants sont désormais en place : voir le parcours ci-dessous.
       </p>
     </div>
@@ -139,6 +141,24 @@
     </p>
   </app-recruiter-step>
 
+  <app-recruiter-step number="4" icon="history" title="Consulter votre historique">
+    <p>
+      Cliquez sur <strong>Mon historique</strong> dans le header. La page charge
+      l'ensemble de vos parties via <code>GET /parties/history</code> et les affiche
+      triées par date décroissante. Chaque ligne est un bouton qui ouvre le détail de
+      la partie (<code>GET /parties/:id</code>).
+    </p>
+    <p>
+      Sur la page de détail, vous voyez le <strong>tirage gagnant</strong> (boules
+      bleues / chance dorée) et vos grilles classées par nombre de numéros
+      correspondants. Les numéros matchés sont mis en évidence en vert, les numéros
+      chance en ambre. Un contrôle <strong>+&nbsp;/&nbsp;−</strong> permet d'ajuster
+      le nombre de grilles affichées. Tout est piloté par des
+      <code>computed()</code> Angular <strong>Signals</strong> en
+      <code>OnPush</code> — aucun recalcul inutile.
+    </p>
+  </app-recruiter-step>
+
   <hr class="divider" />
 
   <!-- Encart parcours utilisateur -->
@@ -152,7 +172,10 @@
       <p>
         L'utilisateur connecté accède au header (nom + bouton de déconnexion) et à la
         <strong>liste des jeux</strong> disponibles. Chaque jeu mène à sa page de
-        grille, où il compose et valide ses grilles (voir l'étape 3). Le bouton de
+        grille, où il compose et valide ses grilles (voir l'étape 3). Le header
+        expose également <strong>Mon historique</strong> : la liste de toutes ses
+        parties jouées, et pour chacune le détail du tirage gagnant avec ses grilles
+        classées par score (voir l'étape 4). Le bouton de
         déconnexion purge le token, vide le signal <code>user</code> du
         <code>AuthService</code> et redirige vers <code>/login</code>. Toute requête
         HTTP qui revient en <strong>401</strong> (token expiré, par exemple) déclenche
@@ -166,7 +189,7 @@
   <!-- Pour aller plus loin -->
   <h3 class="section-title">Pour aller plus loin (optionnel)</h3>
 
-  <app-recruiter-step number="4" icon="bug_report" title="Inspecter les requêtes dans les DevTools">
+  <app-recruiter-step number="5" icon="bug_report" title="Inspecter les requêtes dans les DevTools">
     <p>
       Ouvrez l'onglet <strong>Réseau</strong>, faites une action quelconque. Vous
       verrez l'en-tête <code>Authorization: Bearer …</code> ajouté automatiquement
@@ -177,7 +200,7 @@
     </p>
   </app-recruiter-step>
 
-  <app-recruiter-step number="5" icon="shield" title="Tester le rate-limit du back">
+  <app-recruiter-step number="6" icon="shield" title="Tester le rate-limit du back">
     <p>
       Faites 6 tentatives de login en moins de 15 minutes avec un mauvais mot de
       passe. La 6ᵉ renvoie un <strong>HTTP 429</strong>. Le rate-limit est ciblé
@@ -187,7 +210,7 @@
     </p>
   </app-recruiter-step>
 
-  <app-recruiter-step number="6" icon="code" title="Lire le code (les repos sont publics)">
+  <app-recruiter-step number="7" icon="code" title="Lire le code (les repos sont publics)">
     <p>Les deux dépôts GitHub sont publics et documentés.</p>
     <p>
       <a [href]="contact.githubFront" target="_blank" rel="noopener noreferrer">
@@ -304,7 +327,6 @@
     <li>Pas de refresh token (JWT 7 jours unique, pas de révocation côté serveur).</li>
     <li>RBAC pas encore actif (enum <code>Role</code> prêt en base, middleware à venir).</li>
     <li>Pas de CI de tests/build (seul un workflow de revue automatisée est branché).</li>
-    <li>Consultation des résultats et historique des parties pas encore exposés côté front.</li>
   </ul>
 
   <hr class="divider" />
