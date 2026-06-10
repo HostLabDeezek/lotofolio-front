@@ -10,16 +10,12 @@ export interface Jeu {
 /**
  * Résumé d'une partie renvoyé par GET /api/parties/history (LF-38).
  * Utilisé pour alimenter l'écran « Mon historique » (liste).
- *
- * Note : le champ `tirageDate` correspond au nom renvoyé par l'endpoint
- * /history. L'endpoint de détail (/parties/:id) renvoie `dateTirage` pour
- * rester cohérent avec le modèle `Tirage` existant — c'est intentionnel.
  */
 export interface PartieHistoriqueItem {
   partieId: number;
   tirageId: number;
-  /** ISO 8601 — nom imposé par l'endpoint GET /api/parties/history (LF-38). */
-  tirageDate: string;
+  /** ISO 8601 — date du tirage. */
+  dateTirage: string;
   jeu: Jeu;
 }
 
