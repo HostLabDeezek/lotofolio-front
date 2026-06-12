@@ -19,17 +19,48 @@ export class Auth {
 
   user = signal<User | null>(null);
 
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const parsed: unknown = JSON.parse(savedUser);
+          if (this.isValidUser(parsed)) {
+            this.user.set(parsed);
+          } else {
+            localStorage.removeItem('user');
+          }
+        } catch {
+          localStorage.removeItem('user');
+        }
+      }
+    }
+  }
+
+  /**
+   * Valide explicitement la forme de l'objet issu du localStorage.
+   * Évite d'accepter des données malformées ou manipulées (XSS, extension tierce).
+   */
+  private isValidUser(data: unknown): data is User {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      typeof (data as Record<string, unknown>)['id'] === 'number' &&
+      typeof (data as Record<string, unknown>)['username'] === 'string' &&
+      typeof (data as Record<string, unknown>)['email'] === 'string' &&
+      ['USER', 'ADMIN'].includes((data as Record<string, unknown>)['role'] as string)
+    );
+  }
+
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
         tap(response => {
-
           if (isPlatformBrowser(this.platformId)) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
           }
           this.user.set(response.user);
-          // → Pourquoi ? Pour l'afficher immédiatement dans les composants
         })
       );
   }
