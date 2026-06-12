@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HistoriqueService } from '../../../shared/services/historique.service';
-import { PartieDetail, rankGrilles } from '../../../shared/models/historique.model';
+import { isTirageDone, PartieDetail, rankGrilles } from '../../../shared/models/historique.model';
 import { ApiError } from '../../../core/errors/api-error';
 import { ParisDatePipe } from '../../../shared/pipes/paris-date.pipe';
 
@@ -35,7 +35,8 @@ interface GrilleSimple {
 
 /**
  * Page de détail d'une partie — affiche le tirage gagnant et le classement
- * des grilles (si tirage réalisé), ou la liste paginée des grilles (si en cours).
+ * des grilles (si tirage réalisé / expiré), ou la liste paginée des grilles
+ * (si tirage en cours : PENDING ou DRAWING).
  */
 @Component({
   selector: 'app-historique-detail',
@@ -54,13 +55,19 @@ export class HistoriqueDetail implements OnInit {
   readonly detail = signal<PartieDetail | null>(null);
   readonly topN = signal<number>(5);
 
-  // ── Tirage réalisé ────────────────────────────────────────────────────────
+  // ── Tirage réalisé / expiré ───────────────────────────────────────────────
 
   /** Nombre total de grilles — borne supérieure du contrôle topN. */
   readonly maxTopN = computed(() => this.detail()?.grilles.length ?? 5);
 
-  /** Vrai si le tirage est effectué (DONE). */
-  readonly isDone = computed(() => this.detail()?.tirage.status === 'DONE');
+  /**
+   * Vrai si le tirage est réalisé ou expiré (DONE | EXPIRED).
+   * Cohérent avec `partiesRealisees` dans la liste (même logique via isTirageDone).
+   */
+  readonly isDone = computed(() => {
+    const status = this.detail()?.tirage.status;
+    return status != null && isTirageDone(status);
+  });
 
   /** Numéros du tirage gagnant triés en ordre croissant. */
   readonly sortedTirageNumeros = computed(() =>
@@ -73,7 +80,8 @@ export class HistoriqueDetail implements OnInit {
 
   /**
    * Grilles classées et enrichies avec les Sets de matching.
-   * Numéros triés en ordre croissant pour l'affichage.
+   * Les numéros sont triés en ordre croissant avant de construire les Sets
+   * pour que l'intention soit explicite et indépendante de l'ordre d'origine.
    */
   readonly rankedGrilles = computed<GrilleDisplay[]>(() => {
     const d = this.detail();
@@ -82,22 +90,27 @@ export class HistoriqueDetail implements OnInit {
     const numSet = new Set(d.tirage.numerosTires);
     const chanceSet = new Set(d.tirage.numeroChanceTire);
 
-    return rankGrilles(d, this.topN()).map(g => ({
-      ...g,
-      numeros: [...g.numeros].sort((a, b) => a - b),
-      numeroChance: [...g.numeroChance].sort((a, b) => a - b),
-      matchedNumeros: new Set(g.numeros.filter(n => numSet.has(n))),
-      matchedChance: new Set(g.numeroChance.filter(n => chanceSet.has(n))),
-    }));
+    return rankGrilles(d, this.topN()).map(g => {
+      const sortedNumeros = [...g.numeros].sort((a, b) => a - b);
+      const sortedChance = [...g.numeroChance].sort((a, b) => a - b);
+      return {
+        ...g,
+        numeros: sortedNumeros,
+        numeroChance: sortedChance,
+        matchedNumeros: new Set(sortedNumeros.filter(n => numSet.has(n))),
+        matchedChance: new Set(sortedChance.filter(n => chanceSet.has(n))),
+      };
+    });
   });
 
   /**
    * Titre de la section meilleures grilles.
-   * "Votre meilleure grille" si 1, "Vos N meilleures grilles" si plusieurs.
+   * "Votre meilleure grille" (1), "Vos N meilleures grilles" (>1), "Aucune grille" (0).
    */
   readonly grillesTitre = computed(() => {
     const count = this.rankedGrilles().length;
-    if (count <= 1) return 'Votre meilleure grille';
+    if (count === 0) return 'Aucune grille';
+    if (count === 1) return 'Votre meilleure grille';
     return `Vos ${count} meilleures grilles`;
   });
 
@@ -122,6 +135,11 @@ export class HistoriqueDetail implements OnInit {
     this.visibleCount() < this.grillesSimples().length,
   );
 
+  /** Nombre de grilles restantes non encore affichées (pour le label "Voir plus"). */
+  readonly remainingCount = computed(() =>
+    this.grillesSimples().length - this.visibleCount(),
+  );
+
   // ── Cycle de vie ──────────────────────────────────────────────────────────
 
   ngOnInit(): void {
@@ -138,6 +156,7 @@ export class HistoriqueDetail implements OnInit {
     try {
       const result = await this.historiqueService.getPartieDetail(partieId);
       this.detail.set(result);
+      this.visibleCount.set(PAGE_SIZE); // Réinitialise la pagination à chaque chargement
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         this.error.set('Partie introuvable');
@@ -167,6 +186,7 @@ export class HistoriqueDetail implements OnInit {
     this.router.navigate(['/historique']);
   }
 
+  /** Classe CSS du badge de score selon le niveau de correspondance. */
   scoreBadgeClass(matchNumeros: number, total: number): string {
     if (matchNumeros === total) return 'badge badge--success';
     if (matchNumeros > 0) return 'badge badge--warning';

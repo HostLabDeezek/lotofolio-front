@@ -180,7 +180,7 @@ $surface: #F2F4F8;
   // Grille en cours : numéro chance (ambre pâle neutre)
   &--pending-chance {
     background: rgba(vars.$amber, 0.1);
-    color: darken(#F59E0B, 15%);
+    color: #B45309; // équivalent de vars.$amber assombri de ~15 %
     border-color: rgba(vars.$amber, 0.3);
   }
 

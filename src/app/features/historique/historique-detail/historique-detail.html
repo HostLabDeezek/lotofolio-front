@@ -23,20 +23,20 @@
 
   @if (isDone()) {
 
-    <!-- Tirage gagnant (uniquement si tirage réalisé) -->
+    <!-- Tirage gagnant (uniquement si tirage réalisé ou expiré) -->
     <section class="section" aria-labelledby="tirage-title">
       <h2 class="section-title" id="tirage-title">Tirage gagnant</h2>
       <div class="balls-row">
-        @for (n of sortedTirageNumeros(); track n) {
+        @for (n of sortedTirageNumeros(); track $index) {
           <span class="ball ball--tirage">{{ n }}</span>
         }
-        @for (n of sortedTirageChance(); track n) {
+        @for (n of sortedTirageChance(); track $index) {
           <span class="ball ball--tirage-chance">{{ n }}</span>
         }
       </div>
     </section>
 
-    <!-- Meilleures grilles (uniquement si tirage réalisé) -->
+    <!-- Meilleures grilles (uniquement si tirage réalisé ou expiré) -->
     <section class="section" aria-labelledby="grilles-title">
       <div class="section-header">
         <h2 class="section-title" id="grilles-title">{{ grillesTitre() }}</h2>
@@ -70,14 +70,14 @@
               </span>
             </div>
             <div class="balls-row">
-              @for (n of grille.numeros; track n) {
+              @for (n of grille.numeros; track $index) {
                 <span
                   class="ball"
                   [class.ball--hit]="grille.matchedNumeros.has(n)"
                   [class.ball--miss]="!grille.matchedNumeros.has(n)"
                 >{{ n }}</span>
               }
-              @for (n of grille.numeroChance; track n) {
+              @for (n of grille.numeroChance; track $index) {
                 <span
                   class="ball ball--chance-grille"
                   [class.ball--chance-hit]="grille.matchedChance.has(n)"
@@ -105,10 +105,10 @@
           @for (grille of grillesVisibles(); track $index) {
             <li class="grille-item grille-item--simple">
               <div class="balls-row">
-                @for (n of grille.numeros; track n) {
+                @for (n of grille.numeros; track $index) {
                   <span class="ball ball--pending">{{ n }}</span>
                 }
-                @for (n of grille.numeroChance; track n) {
+                @for (n of grille.numeroChance; track $index) {
                   <span class="ball ball--pending-chance">{{ n }}</span>
                 }
               </div>
@@ -120,7 +120,7 @@
           <button class="voir-plus-btn" (click)="showMore()">
             Voir plus
             <span class="voir-plus-count">
-              ({{ grillesSimples().length - visibleCount() }} restante{{ grillesSimples().length - visibleCount() > 1 ? 's' : '' }})
+              ({{ remainingCount() }} restante{{ remainingCount() > 1 ? 's' : '' }})
             </span>
           </button>
         }

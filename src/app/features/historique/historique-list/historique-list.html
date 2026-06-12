@@ -19,6 +19,8 @@
       class="tab-btn"
       [class.tab-btn--active]="activeTab() === 'en-cours'"
       role="tab"
+      id="tab-en-cours"
+      aria-controls="panel-en-cours"
       [attr.aria-selected]="activeTab() === 'en-cours'"
       (click)="setTab('en-cours')"
     >
@@ -31,6 +33,8 @@
       class="tab-btn"
       [class.tab-btn--active]="activeTab() === 'realises'"
       role="tab"
+      id="tab-realises"
+      aria-controls="panel-realises"
       [attr.aria-selected]="activeTab() === 'realises'"
       (click)="setTab('realises')"
     >
@@ -41,36 +45,73 @@
     </button>
   </div>
 
-  @if (partiesAffichees().length === 0) {
-    <div class="empty-state">
-      <p class="empty-text">
-        @if (activeTab() === 'en-cours') {
-          Aucun tirage en cours pour le moment.
-        } @else {
-          Aucun tirage réalisé pour le moment.
+  <!-- Panneau : Tirages en cours -->
+  <div
+    id="panel-en-cours"
+    role="tabpanel"
+    aria-labelledby="tab-en-cours"
+    [hidden]="activeTab() !== 'en-cours'"
+  >
+    @if (partiesEnCours().length === 0) {
+      <div class="empty-state">
+        <p class="empty-text">Aucun tirage en cours pour le moment.</p>
+      </div>
+    } @else {
+      <ul class="parties-list">
+        @for (partie of partiesEnCours(); track partie.partieId) {
+          <li>
+            <button
+              class="partie-btn"
+              (click)="navigateToDetail(partie.partieId)"
+              [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.dateTirage | parisDate)"
+            >
+              <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
+                {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
+              </span>
+              <span class="partie-info">
+                <span class="partie-nom">{{ partie.jeu.nom }}</span>
+                <span class="partie-date">{{ partie.dateTirage | parisDate }}</span>
+              </span>
+              <span class="partie-chevron" aria-hidden="true">›</span>
+            </button>
+          </li>
         }
-      </p>
-    </div>
-  } @else {
-    <ul class="parties-list">
-      @for (partie of partiesAffichees(); track partie.partieId) {
-        <li>
-          <button
-            class="partie-btn"
-            (click)="navigateToDetail(partie.partieId)"
-            [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.dateTirage | parisDate)"
-          >
-            <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
-              {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
-            </span>
-            <span class="partie-info">
-              <span class="partie-nom">{{ partie.jeu.nom }}</span>
-              <span class="partie-date">{{ partie.dateTirage | parisDate }}</span>
-            </span>
-            <span class="partie-chevron" aria-hidden="true">›</span>
-          </button>
-        </li>
-      }
-    </ul>
-  }
+      </ul>
+    }
+  </div>
+
+  <!-- Panneau : Tirages réalisés -->
+  <div
+    id="panel-realises"
+    role="tabpanel"
+    aria-labelledby="tab-realises"
+    [hidden]="activeTab() !== 'realises'"
+  >
+    @if (partiesRealisees().length === 0) {
+      <div class="empty-state">
+        <p class="empty-text">Aucun tirage réalisé pour le moment.</p>
+      </div>
+    } @else {
+      <ul class="parties-list">
+        @for (partie of partiesRealisees(); track partie.partieId) {
+          <li>
+            <button
+              class="partie-btn"
+              (click)="navigateToDetail(partie.partieId)"
+              [attr.aria-label]="'Voir le détail de la partie ' + partie.jeu.nom + ' du ' + (partie.dateTirage | parisDate)"
+            >
+              <span class="partie-pastille" [attr.data-color]="colorIndex(partie.jeu.id)">
+                {{ partie.jeu.nom.slice(0, 2).toUpperCase() }}
+              </span>
+              <span class="partie-info">
+                <span class="partie-nom">{{ partie.jeu.nom }}</span>
+                <span class="partie-date">{{ partie.dateTirage | parisDate }}</span>
+              </span>
+              <span class="partie-chevron" aria-hidden="true">›</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
 }

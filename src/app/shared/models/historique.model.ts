@@ -62,6 +62,15 @@ export interface GrilleRanked {
 }
 
 /**
+ * Retourne vrai si le tirage a été effectué (DONE) ou expiré (EXPIRED).
+ * Centralise la logique métier pour garantir la cohérence entre la liste
+ * (onglet "Tirages réalisés") et le détail (vue avec tirage gagnant + classement).
+ */
+export function isTirageDone(status: TirageStatus): boolean {
+  return status === 'DONE' || status === 'EXPIRED';
+}
+
+/**
  * Trie les grilles d'une partie par score décroissant et retourne les `topN`
  * meilleures.
  *
