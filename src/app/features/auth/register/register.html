@@ -3,9 +3,10 @@
   <div class="app-title">
     <div class="app-title-row">
       <img src="/logo.png" alt="Lotofolio" class="app-logo" />
-      <h1>LOTOFOLIO</h1>
+      <!-- <p> au lieu de <h1> : le seul h1 de la page est "Créer un compte" -->
+      <p class="app-brand-name">LOTOFOLIO</p>
     </div>
-    <p>Française du jeu</p>
+    <p class="app-brand-sub">Française du jeu</p>
   </div>
 
   <div class="register-card">
@@ -31,9 +32,11 @@
           formControlName="email"
           placeholder="votreemail@example.com"
           autocomplete="email"
+          [attr.aria-describedby]="f['email'].invalid && f['email'].touched ? 'email-error' : null"
+          [attr.aria-invalid]="f['email'].invalid && f['email'].touched || null"
         />
         @if (f['email'].invalid && f['email'].touched) {
-          <div class="field-error">
+          <div class="field-error" id="email-error" role="alert">
             @if (f['email'].hasError('required')) { <p>L'email est obligatoire</p> }
             @if (f['email'].hasError('email')) { <p>Format d'email invalide</p> }
           </div>
@@ -49,9 +52,11 @@
           formControlName="username"
           placeholder="MonPseudo"
           autocomplete="username"
+          [attr.aria-describedby]="f['username'].invalid && f['username'].touched ? 'username-error' : null"
+          [attr.aria-invalid]="f['username'].invalid && f['username'].touched || null"
         />
         @if (f['username'].invalid && f['username'].touched) {
-          <div class="field-error">
+          <div class="field-error" id="username-error" role="alert">
             @if (f['username'].hasError('required')) { <p>Le nom d'utilisateur est obligatoire</p> }
             @if (f['username'].hasError('minlength')) { <p>Minimum 2 caractères</p> }
             @if (f['username'].hasError('maxlength')) { <p>Maximum 30 caractères</p> }
@@ -68,9 +73,11 @@
           formControlName="password"
           placeholder="••••••••"
           autocomplete="new-password"
+          [attr.aria-describedby]="f['password'].invalid && f['password'].touched ? 'password-error' : null"
+          [attr.aria-invalid]="f['password'].invalid && f['password'].touched || null"
         />
         @if (f['password'].invalid && f['password'].touched) {
-          <div class="field-error">
+          <div class="field-error" id="password-error" role="alert">
             @if (f['password'].hasError('required')) { <p>Le mot de passe est obligatoire</p> }
             @if (f['password'].hasError('minlength')) { <p>Minimum 8 caractères</p> }
           </div>
@@ -86,9 +93,11 @@
           formControlName="confirmPassword"
           placeholder="••••••••"
           autocomplete="new-password"
+          [attr.aria-describedby]="f['confirmPassword'].touched && registerForm.hasError('passwordMismatch') ? 'confirm-error' : null"
+          [attr.aria-invalid]="f['confirmPassword'].touched && registerForm.hasError('passwordMismatch') || null"
         />
         @if (f['confirmPassword'].touched && registerForm.hasError('passwordMismatch')) {
-          <div class="field-error">
+          <div class="field-error" id="confirm-error" role="alert">
             <p>Les mots de passe ne correspondent pas</p>
           </div>
         }

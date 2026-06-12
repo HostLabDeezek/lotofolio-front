@@ -74,6 +74,11 @@ export class Auth {
   /**
    * Persiste le token et l'utilisateur après login ou register.
    * Réinitialise le flag `loggingOut` pour éviter un faux-positif d'idempotence.
+   *
+   * ⚠️  SÉCURITÉ : le token est stocké dans `localStorage`, accessible par tout
+   * script JS de la page (risque XSS). La solution recommandée est un cookie
+   * `HttpOnly; Secure; SameSite=Strict` géré côté serveur. Cette migration est
+   * tracée dans LF-48 (sécurisation auth / cookies HttpOnly).
    */
   private persistSession(response: LoginResponse): void {
     if (isPlatformBrowser(this.platformId)) {
