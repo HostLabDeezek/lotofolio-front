@@ -19,6 +19,19 @@ export class Auth {
 
   user = signal<User | null>(null);
 
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          this.user.set(JSON.parse(savedUser) as User);
+        } catch {
+          localStorage.removeItem('user');
+        }
+      }
+    }
+  }
+
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(

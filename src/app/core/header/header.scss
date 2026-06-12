@@ -116,46 +116,94 @@
   }
 }
 
+// ── User menu ─────────────────────────────────
+
 .user-menu {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.user-info {
+// Wrapper relatif pour positionner le dropdown
+.user-dropdown {
+  position: relative;
+}
+
+// Avatar cercle avec initiales
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: vars.$blue;
+  color: vars.$white;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 2px solid rgba(vars.$white, 0.25);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-}
-
-.username {
-  font-family: 'Sora', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: rgba(vars.$white, 0.9);
-  letter-spacing: 0.02em;
-}
-
-.btn-logout {
-  font-family: 'Sora', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(vars.$white, 0.7);
-  background: transparent;
-  border: 1.5px solid rgba(vars.$white, 0.25);
-  padding: 0.4rem 1rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
 
   &:hover {
-    color: vars.$white;
-    border-color: rgba(vars.$white, 0.55);
-    background: rgba(vars.$white, 0.07);
+    background: vars.$blue-hover;
+    border-color: rgba(vars.$white, 0.5);
+  }
+
+  &[aria-expanded='true'] {
+    background: vars.$blue-hover;
+    border-color: rgba(vars.$white, 0.5);
   }
 }
 
+// Dropdown menu
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 160px;
+  background: vars.$white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  z-index: 200;
+  animation: dropdownIn 0.15s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1.1rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$navy;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(vars.$navy, 0.06);
+  }
+}
+
+// Boutons auth (non connecté)
 .auth-buttons {
   display: flex;
   align-items: center;
@@ -196,7 +244,8 @@
   }
 }
 
-// Menu mobile dropdown (affiché sous le header quand menuOpen = true)
+// ── Menu mobile ───────────────────────────────
+
 .mobile-nav {
   display: flex;
   flex-direction: column;
@@ -224,6 +273,27 @@
   }
 }
 
+// Bouton déconnexion dans le menu mobile
+.mobile-logout {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(vars.$white, 0.6);
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(vars.$white, 0.06);
+  padding: 0.9rem 1.25rem;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    color: vars.$white;
+    background: rgba(vars.$white, 0.05);
+  }
+}
+
 // ── Responsive ────────────────────────────────
 
 @include bp.tablet {
@@ -236,9 +306,6 @@
   .container {
     padding: 0 1rem;
     gap: 0.75rem;
-  }
-  .username {
-    display: none;
   }
 }
 
