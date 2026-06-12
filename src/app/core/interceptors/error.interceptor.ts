@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, NEVER, throwError } from 'rxjs';
 import { ApiError, ApiErrorDetail } from '../errors/api-error';
 import { Auth } from '../services/auth';
 
@@ -15,8 +15,11 @@ interface ErrorBody {
 /**
  * Normalise toute erreur HTTP en `ApiError` (status + code + message + details).
  *
- * Sur une réponse 401 (token expiré ou invalide), purge la session et redirige
- * automatiquement vers /login via authService.logout().
+ * Sur une réponse 401 (token expiré ou invalide) :
+ * - Appelle auth.logout() (idempotent grâce au flag loggingOut) qui purge la
+ *   session et redirige vers /login.
+ * - Retourne NEVER pour que les composants ne reçoivent pas d'erreur parasite
+ *   (la navigation va de toute façon les détruire).
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
@@ -24,8 +27,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status === 401) {
-        // Token expiré ou invalide — on purge la session et on redirige vers /login
         auth.logout();
+        return NEVER;
       }
 
       const body: ErrorBody = (err.error as ErrorBody) ?? {};

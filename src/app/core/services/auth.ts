@@ -19,6 +19,13 @@ export class Auth {
 
   user = signal<User | null>(null);
 
+  /**
+   * Flag d'idempotence : empêche les appels multiples simultanés à logout()
+   * (ex : plusieurs requêtes HTTP en vol qui reçoivent toutes un 401).
+   * Remis à false lors d'une nouvelle connexion.
+   */
+  private loggingOut = false;
+
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       const savedUser = localStorage.getItem('user');
@@ -61,11 +68,15 @@ export class Auth {
             localStorage.setItem('user', JSON.stringify(response.user));
           }
           this.user.set(response.user);
+          this.loggingOut = false; // Réinitialise le flag à la reconnexion
         })
       );
   }
 
   logout(): void {
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
