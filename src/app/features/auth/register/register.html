@@ -1,0 +1,115 @@
+<div class="register-container">
+
+  <div class="app-title">
+    <div class="app-title-row">
+      <img src="/logo.png" alt="Lotofolio" class="app-logo" />
+      <h1>LOTOFOLIO</h1>
+    </div>
+    <p>Française du jeu</p>
+  </div>
+
+  <div class="register-card">
+
+    <h1>Créer un compte</h1>
+    <p>Rejoignez Lotofolio et commencez à jouer</p>
+
+    <!-- Message d'erreur global -->
+    @if (errorMessage()) {
+      <div class="error-message" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="votreemail@example.com"
+          autocomplete="email"
+        />
+        @if (f['email'].invalid && f['email'].touched) {
+          <div class="field-error">
+            @if (f['email'].hasError('required')) { <p>L'email est obligatoire</p> }
+            @if (f['email'].hasError('email')) { <p>Format d'email invalide</p> }
+          </div>
+        }
+      </div>
+
+      <!-- Nom d'utilisateur -->
+      <div class="form-group">
+        <label for="username">Nom d'utilisateur</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          placeholder="MonPseudo"
+          autocomplete="username"
+        />
+        @if (f['username'].invalid && f['username'].touched) {
+          <div class="field-error">
+            @if (f['username'].hasError('required')) { <p>Le nom d'utilisateur est obligatoire</p> }
+            @if (f['username'].hasError('minlength')) { <p>Minimum 2 caractères</p> }
+            @if (f['username'].hasError('maxlength')) { <p>Maximum 30 caractères</p> }
+          </div>
+        }
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="new-password"
+        />
+        @if (f['password'].invalid && f['password'].touched) {
+          <div class="field-error">
+            @if (f['password'].hasError('required')) { <p>Le mot de passe est obligatoire</p> }
+            @if (f['password'].hasError('minlength')) { <p>Minimum 8 caractères</p> }
+          </div>
+        }
+      </div>
+
+      <!-- Confirmation mot de passe -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le mot de passe</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="••••••••"
+          autocomplete="new-password"
+        />
+        @if (f['confirmPassword'].touched && registerForm.hasError('passwordMismatch')) {
+          <div class="field-error">
+            <p>Les mots de passe ne correspondent pas</p>
+          </div>
+        }
+      </div>
+
+      <!-- Bouton inscription -->
+      <button type="submit" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span>Inscription…</span>
+        } @else {
+          <span>Créer mon compte</span>
+        }
+      </button>
+
+      <!-- Lien vers login -->
+      <p class="login-link">
+        Déjà un compte ?
+        <a routerLink="/login">Se connecter</a>
+      </p>
+
+    </form>
+
+  </div>
+</div>
