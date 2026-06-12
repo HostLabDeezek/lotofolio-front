@@ -11,16 +11,49 @@
 } @else {
   <div class="page-header">
     <h1 class="page-title">Mon historique</h1>
-    <p class="page-subtitle">Parties des 30 derniers jours</p>
   </div>
 
-  @if (parties().length === 0) {
+  <!-- Onglets -->
+  <div class="tabs" role="tablist" aria-label="Filtrer l'historique">
+    <button
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'en-cours'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'en-cours'"
+      (click)="setTab('en-cours')"
+    >
+      Tirages en cours
+      @if (partiesEnCours().length > 0) {
+        <span class="tab-badge">{{ partiesEnCours().length }}</span>
+      }
+    </button>
+    <button
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === 'realises'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'realises'"
+      (click)="setTab('realises')"
+    >
+      Tirages réalisés
+      @if (partiesRealisees().length > 0) {
+        <span class="tab-badge">{{ partiesRealisees().length }}</span>
+      }
+    </button>
+  </div>
+
+  @if (partiesAffichees().length === 0) {
     <div class="empty-state">
-      <p class="empty-text">Vous n'avez joué aucune partie ce mois-ci.</p>
+      <p class="empty-text">
+        @if (activeTab() === 'en-cours') {
+          Aucun tirage en cours pour le moment.
+        } @else {
+          Aucun tirage réalisé pour le moment.
+        }
+      </p>
     </div>
   } @else {
     <ul class="parties-list">
-      @for (partie of parties(); track partie.partieId) {
+      @for (partie of partiesAffichees(); track partie.partieId) {
         <li>
           <button
             class="partie-btn"

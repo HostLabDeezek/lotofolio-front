@@ -170,6 +170,20 @@ $surface: #F2F4F8;
     border-color: rgba(vars.$navy, 0.12);
   }
 
+  // Grille en cours : numéro principal (bleu pâle neutre)
+  &--pending {
+    background: rgba(vars.$blue, 0.08);
+    color: vars.$blue;
+    border-color: rgba(vars.$blue, 0.2);
+  }
+
+  // Grille en cours : numéro chance (ambre pâle neutre)
+  &--pending-chance {
+    background: rgba(vars.$amber, 0.1);
+    color: darken(#F59E0B, 15%);
+    border-color: rgba(vars.$amber, 0.3);
+  }
+
   @include bp.mobile {
     width: 32px;
     height: 32px;
@@ -195,6 +209,11 @@ $surface: #F2F4F8;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+
+  // Vue en cours : pas de padding vertical supérieur inutile
+  &--simple {
+    padding: 0.75rem 1rem;
+  }
 }
 
 .grille-meta {
@@ -290,6 +309,52 @@ $surface: #F2F4F8;
   color: vars.$text-dark;
   min-width: 1.5rem;
   text-align: center;
+}
+
+// ── Bouton "Voir plus" ─────────────────────────
+
+.voir-plus-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1.25rem auto 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: vars.$blue;
+  background: transparent;
+  border: 1.5px solid vars.$blue;
+  padding: 0.55rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: vars.$blue;
+    color: vars.$white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 2px;
+  }
+}
+
+.voir-plus-count {
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+// ── Texte vide ─────────────────────────────────
+
+.empty-text {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  color: vars.$text-muted;
+  margin: 0;
+  text-align: center;
+  padding: 1.5rem 0;
 }
 
 // ── États ──────────────────────────────────────

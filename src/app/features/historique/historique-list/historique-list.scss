@@ -15,7 +15,70 @@ $surface: #F2F4F8;
 .page-header {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0 1.25rem 1.5rem;
+  padding: 0 1.25rem 1rem;
+}
+
+// ── Onglets ────────────────────────────────────
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  max-width: 680px;
+  margin: 0 auto 1.25rem;
+  padding: 0 1.25rem;
+  border-bottom: 2px solid rgba(vars.$navy, 0.1);
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: vars.$text-muted;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: vars.$text-dark;
+  }
+
+  &--active {
+    color: vars.$blue;
+    font-weight: 600;
+    border-bottom-color: vars.$blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$blue;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(vars.$blue, 0.1);
+  color: vars.$blue;
+  border-radius: 9px;
+
+  .tab-btn--active & {
+    background: vars.$blue;
+    color: vars.$white;
+  }
 }
 
 .page-title {

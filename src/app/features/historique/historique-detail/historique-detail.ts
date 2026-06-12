@@ -12,6 +12,8 @@ import { PartieDetail, rankGrilles } from '../../../shared/models/historique.mod
 import { ApiError } from '../../../core/errors/api-error';
 import { ParisDatePipe } from '../../../shared/pipes/paris-date.pipe';
 
+const PAGE_SIZE = 10;
+
 /** Grille classée enrichie avec les Sets de numéros matchés, pour le template. */
 interface GrilleDisplay {
   rank: number;
@@ -25,9 +27,15 @@ interface GrilleDisplay {
   matchedChance: Set<number>;
 }
 
+/** Grille simple (tirage en cours) — numéros triés, sans scoring. */
+interface GrilleSimple {
+  numeros: number[];
+  numeroChance: number[];
+}
+
 /**
  * Page de détail d'une partie — affiche le tirage gagnant et le classement
- * des grilles par nombre de numéros correspondants (LF-42).
+ * des grilles (si tirage réalisé), ou la liste paginée des grilles (si en cours).
  */
 @Component({
   selector: 'app-historique-detail',
@@ -46,12 +54,26 @@ export class HistoriqueDetail implements OnInit {
   readonly detail = signal<PartieDetail | null>(null);
   readonly topN = signal<number>(5);
 
+  // ── Tirage réalisé ────────────────────────────────────────────────────────
+
   /** Nombre total de grilles — borne supérieure du contrôle topN. */
   readonly maxTopN = computed(() => this.detail()?.grilles.length ?? 5);
 
+  /** Vrai si le tirage est effectué (DONE). */
+  readonly isDone = computed(() => this.detail()?.tirage.status === 'DONE');
+
+  /** Numéros du tirage gagnant triés en ordre croissant. */
+  readonly sortedTirageNumeros = computed(() =>
+    [...(this.detail()?.tirage.numerosTires ?? [])].sort((a, b) => a - b),
+  );
+
+  readonly sortedTirageChance = computed(() =>
+    [...(this.detail()?.tirage.numeroChanceTire ?? [])].sort((a, b) => a - b),
+  );
+
   /**
    * Grilles classées et enrichies avec les Sets de matching.
-   * Recalculé uniquement quand `detail` ou `topN` change.
+   * Numéros triés en ordre croissant pour l'affichage.
    */
   readonly rankedGrilles = computed<GrilleDisplay[]>(() => {
     const d = this.detail();
@@ -62,10 +84,45 @@ export class HistoriqueDetail implements OnInit {
 
     return rankGrilles(d, this.topN()).map(g => ({
       ...g,
+      numeros: [...g.numeros].sort((a, b) => a - b),
+      numeroChance: [...g.numeroChance].sort((a, b) => a - b),
       matchedNumeros: new Set(g.numeros.filter(n => numSet.has(n))),
       matchedChance: new Set(g.numeroChance.filter(n => chanceSet.has(n))),
     }));
   });
+
+  /**
+   * Titre de la section meilleures grilles.
+   * "Votre meilleure grille" si 1, "Vos N meilleures grilles" si plusieurs.
+   */
+  readonly grillesTitre = computed(() => {
+    const count = this.rankedGrilles().length;
+    if (count <= 1) return 'Votre meilleure grille';
+    return `Vos ${count} meilleures grilles`;
+  });
+
+  // ── Tirage en cours ───────────────────────────────────────────────────────
+
+  /** Nombre de grilles visibles dans la vue "en cours" (pagination par 10). */
+  readonly visibleCount = signal<number>(PAGE_SIZE);
+
+  /** Toutes les grilles triées (sans scoring) pour la vue en cours. */
+  readonly grillesSimples = computed<GrilleSimple[]>(() =>
+    (this.detail()?.grilles ?? []).map(g => ({
+      numeros: [...g.numeros].sort((a, b) => a - b),
+      numeroChance: [...g.numeroChance].sort((a, b) => a - b),
+    })),
+  );
+
+  readonly grillesVisibles = computed(() =>
+    this.grillesSimples().slice(0, this.visibleCount()),
+  );
+
+  readonly hasMore = computed(() =>
+    this.visibleCount() < this.grillesSimples().length,
+  );
+
+  // ── Cycle de vie ──────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -92,6 +149,8 @@ export class HistoriqueDetail implements OnInit {
     }
   }
 
+  // ── Actions ───────────────────────────────────────────────────────────────
+
   incrementTopN(): void {
     this.topN.update(n => Math.min(n + 1, this.maxTopN()));
   }
@@ -100,11 +159,14 @@ export class HistoriqueDetail implements OnInit {
     this.topN.update(n => Math.max(n - 1, 1));
   }
 
+  showMore(): void {
+    this.visibleCount.update(n => n + PAGE_SIZE);
+  }
+
   goBack(): void {
     this.router.navigate(['/historique']);
   }
 
-  /** Classe CSS du badge de score selon le niveau de correspondance. */
   scoreBadgeClass(matchNumeros: number, total: number): string {
     if (matchNumeros === total) return 'badge badge--success';
     if (matchNumeros > 0) return 'badge badge--warning';

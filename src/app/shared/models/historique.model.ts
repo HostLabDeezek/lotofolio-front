@@ -7,6 +7,9 @@ export interface Jeu {
   nom: string;
 }
 
+/** Statuts possibles d'un tirage — miroir de l'enum Prisma côté backend. */
+export type TirageStatus = 'PENDING' | 'DRAWING' | 'DONE' | 'EXPIRED';
+
 /**
  * Résumé d'une partie renvoyé par GET /api/parties/history (LF-38).
  * Utilisé pour alimenter l'écran « Mon historique » (liste).
@@ -17,6 +20,8 @@ export interface PartieHistoriqueItem {
   /** ISO 8601 — date du tirage. */
   dateTirage: string;
   jeu: Jeu;
+  /** Status du tirage — utilisé pour séparer les onglets en cours / réalisés. */
+  status: TirageStatus;
 }
 
 /**
@@ -29,6 +34,8 @@ export interface PartieDetail {
     id: number;
     /** ISO 8601 — nommé `dateTirage` comme dans le modèle `Tirage` existant. */
     dateTirage: string;
+    /** Status du tirage — détermine l'affichage du détail (en cours vs réalisé). */
+    status: TirageStatus;
     numerosTires: number[];
     numeroChanceTire: number[];
     jeu: Jeu;

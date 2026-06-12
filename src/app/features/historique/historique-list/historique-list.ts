@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -10,10 +11,10 @@ import { HistoriqueService } from '../../../shared/services/historique.service';
 import { PartieHistoriqueItem } from '../../../shared/models/historique.model';
 import { ParisDatePipe } from '../../../shared/pipes/paris-date.pipe';
 
+type Tab = 'en-cours' | 'realises';
+
 /**
- * Page « Mon historique » — liste des parties jouées sur les 30 derniers jours
- * (LF-41). Charge la liste via HistoriqueService et navigue vers
- * HistoriqueDetail au clic.
+ * Page « Mon historique » — liste des parties avec onglets En cours / Réalisés.
  */
 @Component({
   selector: 'app-historique-list',
@@ -29,15 +30,27 @@ export class HistoriqueList implements OnInit {
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
   readonly parties = signal<PartieHistoriqueItem[]>([]);
+  readonly activeTab = signal<Tab>('en-cours');
+
+  /** Tirages non encore effectués (PENDING ou DRAWING). */
+  readonly partiesEnCours = computed(() =>
+    this.parties().filter(p => p.status === 'PENDING' || p.status === 'DRAWING'),
+  );
+
+  /** Tirages effectués (DONE) ou expirés (EXPIRED). */
+  readonly partiesRealisees = computed(() =>
+    this.parties().filter(p => p.status === 'DONE' || p.status === 'EXPIRED'),
+  );
+
+  /** Liste affichée selon l'onglet actif. */
+  readonly partiesAffichees = computed(() =>
+    this.activeTab() === 'en-cours' ? this.partiesEnCours() : this.partiesRealisees(),
+  );
 
   ngOnInit(): void {
     void this.loadHistory();
   }
 
-  /**
-   * Charge l'historique des parties. Exposée publiquement pour permettre
-   * au bouton « Réessayer » de relancer le chargement après une erreur.
-   */
   async loadHistory(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -51,14 +64,15 @@ export class HistoriqueList implements OnInit {
     }
   }
 
+  setTab(tab: Tab): void {
+    this.activeTab.set(tab);
+  }
+
   navigateToDetail(partieId: number): void {
     this.router.navigate(['/historique', partieId]);
   }
 
-  /**
-   * Indice de couleur (0-5) dérivé du jeu pour la pastille.
-   * Modulo euclidien : garantit un résultat positif même si jeuId <= 0.
-   */
+  /** Indice de couleur (0-5) dérivé du jeu pour la pastille. */
   colorIndex(jeuId: number): number {
     return ((jeuId - 1) % 6 + 6) % 6;
   }
