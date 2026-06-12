@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, User } from '../../shared/models/user.model';
+import { LoginRequest, LoginResponse, RegisterRequest, User } from '../../shared/models/user.model';
 import { inject, Injectable, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -60,17 +60,33 @@ export class Auth {
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
-      .pipe(
-        tap(response => {
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-          this.user.set(response.user);
-          this.loggingOut = false; // Réinitialise le flag à la reconnexion
-        })
-      );
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
+      tap(response => this.persistSession(response)),
+    );
+  }
+
+  register(data: RegisterRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/register`, data).pipe(
+      tap(response => this.persistSession(response)),
+    );
+  }
+
+  /**
+   * Persiste le token et l'utilisateur après login ou register.
+   * Réinitialise le flag `loggingOut` pour éviter un faux-positif d'idempotence.
+   *
+   * ⚠️  SÉCURITÉ : le token est stocké dans `localStorage`, accessible par tout
+   * script JS de la page (risque XSS). La solution recommandée est un cookie
+   * `HttpOnly; Secure; SameSite=Strict` géré côté serveur. Cette migration est
+   * tracée dans LF-48 (sécurisation auth / cookies HttpOnly).
+   */
+  private persistSession(response: LoginResponse): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+    }
+    this.user.set(response.user);
+    this.loggingOut = false;
   }
 
   logout(): void {
