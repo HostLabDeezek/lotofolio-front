@@ -1,6 +1,6 @@
 import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { Auth } from '../services/auth';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -11,14 +11,14 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class HeaderComponent {
   protected readonly authService = inject(Auth);
-  private readonly router = inject(Router);
 
-  readonly menuOpen = signal(false);
-  readonly dropdownOpen = signal(false);
+  protected readonly menuOpen = signal(false);
+  protected readonly dropdownOpen = signal(false);
 
-  readonly userInitials = computed(() => {
-    const username = this.authService.user()?.username ?? '';
-    const parts = username.trim().split(/\s+/);
+  protected readonly userInitials = computed(() => {
+    const username = this.authService.user()?.username?.trim() ?? '';
+    if (!username) return '?';
+    const parts = username.split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
@@ -28,11 +28,20 @@ export class HeaderComponent {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
+
     if (!target.closest('app-header') && this.menuOpen()) {
       this.closeMenu();
     }
-    // Le bouton avatar utilise stopPropagation, donc ce handler
-    // ne se déclenche que pour les clics en dehors du dropdown.
+
+    // Ferme le dropdown si le clic est en dehors du .user-dropdown
+    // (pas de stopPropagation sur le bouton avatar — les events se propagent normalement)
+    if (this.dropdownOpen() && !target.closest('.user-dropdown')) {
+      this.dropdownOpen.set(false);
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
     if (this.dropdownOpen()) {
       this.dropdownOpen.set(false);
     }
@@ -46,14 +55,14 @@ export class HeaderComponent {
     this.menuOpen.set(false);
   }
 
-  toggleDropdown(event: MouseEvent): void {
-    event.stopPropagation();
+  toggleDropdown(): void {
     this.dropdownOpen.update(v => !v);
   }
 
   logout(): void {
     this.dropdownOpen.set(false);
     this.closeMenu();
+    // authService.logout() purge le localStorage et redirige vers /login
     this.authService.logout();
   }
 }

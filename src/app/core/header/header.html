@@ -22,8 +22,9 @@
         <div class="user-dropdown">
           <button
             class="avatar"
-            (click)="toggleDropdown($event)"
+            (click)="toggleDropdown()"
             [attr.aria-expanded]="dropdownOpen()"
+            aria-haspopup="menu"
             aria-label="Menu utilisateur"
           >
             {{ userInitials() }}
