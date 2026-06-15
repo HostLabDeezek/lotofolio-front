@@ -213,6 +213,15 @@
   gap: 1.25rem;
 }
 
+.grille__hidden-info {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  color: vars.$text-muted;
+  text-align: center;
+  margin: 0.25rem 0 0;
+  font-style: italic;
+}
+
 // Actions (bouton « + » et validation)
 
 .grille__actions,

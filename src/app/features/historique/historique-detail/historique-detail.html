@@ -21,74 +21,111 @@
     <p class="page-subtitle">{{ d.tirage.dateTirage | parisDate }}</p>
   </div>
 
-  <!-- Tirage gagnant -->
-  <section class="section" aria-labelledby="tirage-title">
-    <h2 class="section-title" id="tirage-title">Tirage gagnant</h2>
-    <div class="balls-row">
-      @for (n of d.tirage.numerosTires; track n) {
-        <span class="ball ball--tirage">{{ n }}</span>
-      }
-      @for (n of d.tirage.numeroChanceTire; track n) {
-        <span class="ball ball--tirage-chance">{{ n }}</span>
-      }
-    </div>
-  </section>
+  @if (isDone()) {
 
-  <!-- Meilleures grilles -->
-  <section class="section" aria-labelledby="grilles-title">
-    <div class="section-header">
-      <h2 class="section-title" id="grilles-title">
-        Vos {{ rankedGrilles().length }}
-        meilleure{{ rankedGrilles().length > 1 ? 's' : '' }}
-        grille{{ rankedGrilles().length > 1 ? 's' : '' }}
-      </h2>
-      <div class="topn-controls" aria-label="Nombre de grilles affichées">
-        <button
-          class="topn-btn"
-          (click)="decrementTopN()"
-          [disabled]="topN() <= 1"
-          aria-label="Afficher moins de grilles"
-        >−</button>
-        <span class="topn-value" aria-live="polite">{{ topN() }}</span>
-        <button
-          class="topn-btn"
-          (click)="incrementTopN()"
-          [disabled]="topN() >= maxTopN()"
-          aria-label="Afficher plus de grilles"
-        >+</button>
+    <!-- Tirage gagnant (uniquement si tirage réalisé ou expiré) -->
+    <section class="section" aria-labelledby="tirage-title">
+      <h2 class="section-title" id="tirage-title">Tirage gagnant</h2>
+      <div class="balls-row">
+        @for (n of sortedTirageNumeros(); track $index) {
+          <span class="ball ball--tirage">{{ n }}</span>
+        }
+        @for (n of sortedTirageChance(); track $index) {
+          <span class="ball ball--tirage-chance">{{ n }}</span>
+        }
       </div>
-    </div>
+    </section>
 
-    <ul class="grilles-list">
-      @for (grille of rankedGrilles(); track grille.rank) {
-        <li class="grille-item">
-          <div class="grille-meta">
-            <span class="rank-badge">#{{ grille.rank }}</span>
-            <span [class]="scoreBadgeClass(grille.matchNumeros, d.tirage.numerosTires.length)">
-              {{ grille.matchNumeros }}/{{ d.tirage.numerosTires.length }} numéros
-              @if (grille.matchChance > 0) {
-                &nbsp;+ {{ grille.matchChance }}/{{ d.tirage.numeroChanceTire.length }} chance
+    <!-- Meilleures grilles (uniquement si tirage réalisé ou expiré) -->
+    <section class="section" aria-labelledby="grilles-title">
+      <div class="section-header">
+        <h2 class="section-title" id="grilles-title">{{ grillesTitre() }}</h2>
+        <div class="topn-controls" aria-label="Nombre de grilles affichées">
+          <button
+            class="topn-btn"
+            (click)="decrementTopN()"
+            [disabled]="topN() <= 1"
+            aria-label="Afficher moins de grilles"
+          >−</button>
+          <span class="topn-value" aria-live="polite">{{ topN() }}</span>
+          <button
+            class="topn-btn"
+            (click)="incrementTopN()"
+            [disabled]="topN() >= maxTopN()"
+            aria-label="Afficher plus de grilles"
+          >+</button>
+        </div>
+      </div>
+
+      <ul class="grilles-list">
+        @for (grille of rankedGrilles(); track grille.rank) {
+          <li class="grille-item">
+            <div class="grille-meta">
+              <span class="rank-badge">#{{ grille.rank }}</span>
+              <span [class]="scoreBadgeClass(grille.matchNumeros, d.tirage.numerosTires.length)">
+                {{ grille.matchNumeros }}/{{ d.tirage.numerosTires.length }} numéros
+                @if (grille.matchChance > 0) {
+                  &nbsp;+ {{ grille.matchChance }}/{{ d.tirage.numeroChanceTire.length }} chance
+                }
+              </span>
+            </div>
+            <div class="balls-row">
+              @for (n of grille.numeros; track $index) {
+                <span
+                  class="ball"
+                  [class.ball--hit]="grille.matchedNumeros.has(n)"
+                  [class.ball--miss]="!grille.matchedNumeros.has(n)"
+                >{{ n }}</span>
               }
+              @for (n of grille.numeroChance; track $index) {
+                <span
+                  class="ball ball--chance-grille"
+                  [class.ball--chance-hit]="grille.matchedChance.has(n)"
+                  [class.ball--chance-miss]="!grille.matchedChance.has(n)"
+                >{{ n }}</span>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+  } @else {
+
+    <!-- Grilles jouées (tirage en cours) — pagination par 10, sans classement -->
+    <section class="section" aria-labelledby="grilles-encours-title">
+      <h2 class="section-title" id="grilles-encours-title">
+        Vos grilles ({{ grillesSimples().length }})
+      </h2>
+
+      @if (grillesSimples().length === 0) {
+        <p class="empty-text">Aucune grille jouée pour cette partie.</p>
+      } @else {
+        <ul class="grilles-list">
+          @for (grille of grillesVisibles(); track $index) {
+            <li class="grille-item grille-item--simple">
+              <div class="balls-row">
+                @for (n of grille.numeros; track $index) {
+                  <span class="ball ball--pending">{{ n }}</span>
+                }
+                @for (n of grille.numeroChance; track $index) {
+                  <span class="ball ball--pending-chance">{{ n }}</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+
+        @if (hasMore()) {
+          <button class="voir-plus-btn" (click)="showMore()">
+            Voir plus
+            <span class="voir-plus-count">
+              ({{ remainingCount() }} restante{{ remainingCount() > 1 ? 's' : '' }})
             </span>
-          </div>
-          <div class="balls-row">
-            @for (n of grille.numeros; track n) {
-              <span
-                class="ball"
-                [class.ball--hit]="grille.matchedNumeros.has(n)"
-                [class.ball--miss]="!grille.matchedNumeros.has(n)"
-              >{{ n }}</span>
-            }
-            @for (n of grille.numeroChance; track n) {
-              <span
-                class="ball ball--chance-grille"
-                [class.ball--chance-hit]="grille.matchedChance.has(n)"
-                [class.ball--chance-miss]="!grille.matchedChance.has(n)"
-              >{{ n }}</span>
-            }
-          </div>
-        </li>
+          </button>
+        }
       }
-    </ul>
-  </section>
+    </section>
+
+  }
 }
