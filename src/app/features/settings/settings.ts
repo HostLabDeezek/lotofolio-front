@@ -1,10 +1,10 @@
 import {
-  AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import type { AbstractControl } from '@angular/forms';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,6 +16,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Auth } from '../../core/services/auth';
 import { ApiError } from '../../core/errors/api-error';
+import { ChangePasswordRequest } from '../../shared/models/user.model';
 
 /** Vérifie que newPassword === confirmPassword. */
 function passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -39,14 +40,11 @@ export class Settings {
 
   readonly user = this.authService.user;
 
-  readonly displayName = computed(() => {
-    const u = this.user();
-    if (!u) return '';
-    const first = u.firstName?.trim();
-    const last = u.lastName?.trim();
-    if (first && last) return `${first} ${last}`;
-    if (first) return first;
-    return u.username;
+  /** Rôle affiché en clair pour l'utilisateur. */
+  readonly displayRole = computed(() => {
+    const role = this.user()?.role;
+    const labels: Record<string, string> = { USER: 'Utilisateur', ADMIN: 'Administrateur' };
+    return role ? (labels[role] ?? role) : '—';
   });
 
   readonly isLoading = signal(false);
@@ -62,9 +60,8 @@ export class Settings {
     { validators: passwordMatchValidator },
   );
 
-  get f() {
-    return this.passwordForm.controls;
-  }
+  /** Contrôles exposés au template avec typage strict. */
+  protected readonly controls = this.passwordForm.controls;
 
   onSubmit(): void {
     if (this.passwordForm.invalid) {
@@ -73,12 +70,15 @@ export class Settings {
     }
 
     const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+    // Type check firewall : si ChangePasswordRequest évolue, TypeScript alertera ici.
+    const payload: ChangePasswordRequest = { currentPassword, newPassword };
+
     this.isLoading.set(true);
     this.successMessage.set('');
     this.errorMessage.set('');
 
     this.authService
-      .changePassword({ currentPassword, newPassword })
+      .changePassword(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

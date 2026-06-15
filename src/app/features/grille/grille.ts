@@ -105,7 +105,11 @@ export class Grille implements OnInit, OnDestroy {
   /** Exposé au template pour l'attribut max de l'input flash. */
   protected readonly maxGrilles = MAX_GRILLES;
 
-  /** Vrai si l'utilisateur connecté est admin. */
+  /**
+   * Vrai si l'utilisateur connecté est admin.
+   * @security Contrainte UX uniquement — basée sur le localStorage.
+   * Le backend valide indépendamment le rôle via le JWT.
+   */
   protected readonly isAdmin = computed<boolean>(
     () => this.authService.user()?.role === 'ADMIN',
   );

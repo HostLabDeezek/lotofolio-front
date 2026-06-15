@@ -10,12 +10,12 @@
 
     <div class="info-row">
       <span class="info-label">Prénom</span>
-      <span class="info-value">{{ user()?.firstName || '—' }}</span>
+      <span class="info-value">{{ user()?.firstName ?? '—' }}</span>
     </div>
 
     <div class="info-row">
       <span class="info-label">Nom</span>
-      <span class="info-value">{{ user()?.lastName || '—' }}</span>
+      <span class="info-value">{{ user()?.lastName ?? '—' }}</span>
     </div>
 
     <div class="info-row">
@@ -25,7 +25,7 @@
 
     <div class="info-row">
       <span class="info-label">Rôle</span>
-      <span class="info-value info-value--role">{{ user()?.role }}</span>
+      <span class="info-value info-value--role">{{ displayRole() }}</span>
     </div>
   </section>
 
@@ -52,7 +52,7 @@
           placeholder="••••••••"
           autocomplete="current-password"
         />
-        @if (f['currentPassword'].invalid && f['currentPassword'].touched) {
+        @if (controls.currentPassword.invalid && controls.currentPassword.touched) {
           <div class="field-error" role="alert">
             <p>Le mot de passe actuel est requis</p>
           </div>
@@ -69,10 +69,10 @@
           placeholder="••••••••"
           autocomplete="new-password"
         />
-        @if (f['newPassword'].invalid && f['newPassword'].touched) {
+        @if (controls.newPassword.invalid && controls.newPassword.touched) {
           <div class="field-error" role="alert">
-            @if (f['newPassword'].hasError('required')) { <p>Le nouveau mot de passe est requis</p> }
-            @if (f['newPassword'].hasError('minlength')) { <p>Minimum 8 caractères</p> }
+            @if (controls.newPassword.hasError('required')) { <p>Le nouveau mot de passe est requis</p> }
+            @if (controls.newPassword.hasError('minlength')) { <p>Minimum 8 caractères</p> }
           </div>
         }
       </div>
@@ -87,7 +87,7 @@
           placeholder="••••••••"
           autocomplete="new-password"
         />
-        @if (f['confirmPassword'].touched && passwordForm.hasError('passwordMismatch')) {
+        @if (controls.confirmPassword.touched && passwordForm.hasError('passwordMismatch')) {
           <div class="field-error" role="alert">
             <p>Les mots de passe ne correspondent pas</p>
           </div>

@@ -210,9 +210,9 @@
   }
 
   &--danger {
-    color: #c0392b;
+    color: vars.$danger;
     &:hover {
-      background: rgba(#c0392b, 0.06);
+      background: rgba(vars.$danger, 0.06);
     }
   }
 }

@@ -84,7 +84,7 @@
         />
       }
       @if (hiddenGrillesCount() > 0) {
-        <p class="grille__hidden-info">
+        <p class="grille__hidden-info" aria-live="polite" aria-atomic="true">
           + {{ hiddenGrillesCount() }} grille(s) supplémentaire(s) seront soumises.
         </p>
       }
