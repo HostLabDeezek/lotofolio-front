@@ -1,6 +1,8 @@
 export interface User {
     id: number;
     username: string;
+    firstName?: string | null;
+    lastName?: string | null;
     email: string;
     role: 'USER' | 'ADMIN';
 }
@@ -19,4 +21,9 @@ export interface RegisterRequest {
     email: string;
     username: string;
     password: string;
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
 }

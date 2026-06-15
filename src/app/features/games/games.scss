@@ -10,9 +10,12 @@ $surface: #F2F4F8;
 
 :host {
   display: block;
-  padding: 1.5rem 0 4rem;
+  padding: 1.5rem 0 2rem;
   background: $surface;
-  min-height: 100%;
+  // min-height: 100% intentionnellement omis : avec seulement 2 jeux le contenu
+  // est plus court que la fenêtre, et forcer 100% additionne le padding au
+  // min-height hérité du layout (box-sizing: content-box sur les custom elements),
+  // ce qui crée un scroll inutile (LF-50).
 }
 
 // En-tête

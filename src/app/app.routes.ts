@@ -12,6 +12,10 @@ export const routes: Routes = [
       { path: '', redirectTo: 'jeux', pathMatch: 'full' },
       { path: 'jeux', loadComponent: () => import('./features/games/games').then(m => m.Games) },
       {
+        path: 'parametres',
+        loadComponent: () => import('./features/settings/settings').then(m => m.Settings),
+      },
+      {
         path: 'jeux/:id/grille',
         loadComponent: () => import('./features/grille/grille').then(m => m.Grille),
       },

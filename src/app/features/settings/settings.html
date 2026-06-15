@@ -1,0 +1,108 @@
+<div class="settings-page">
+
+  <div class="settings-header">
+    <h1 class="settings-title">Paramètres</h1>
+  </div>
+
+  <!-- ── Informations du compte ── -->
+  <section class="settings-card">
+    <h2 class="card-title">Mon compte</h2>
+
+    <div class="info-row">
+      <span class="info-label">Prénom</span>
+      <span class="info-value">{{ user()?.firstName ?? '—' }}</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Nom</span>
+      <span class="info-value">{{ user()?.lastName ?? '—' }}</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Adresse email</span>
+      <span class="info-value">{{ user()?.email }}</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Rôle</span>
+      <span class="info-value info-value--role">{{ displayRole() }}</span>
+    </div>
+  </section>
+
+  <!-- ── Changer le mot de passe ── -->
+  <section class="settings-card">
+    <h2 class="card-title">Changer le mot de passe</h2>
+
+    @if (successMessage()) {
+      <div class="alert alert--success" role="status">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+      <div class="alert alert--error" role="alert">{{ errorMessage() }}</div>
+    }
+
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()">
+
+      <!-- Mot de passe actuel -->
+      <div class="form-group">
+        <label for="currentPassword">Mot de passe actuel</label>
+        <input
+          type="password"
+          id="currentPassword"
+          formControlName="currentPassword"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+        @if (controls.currentPassword.invalid && controls.currentPassword.touched) {
+          <div class="field-error" role="alert">
+            <p>Le mot de passe actuel est requis</p>
+          </div>
+        }
+      </div>
+
+      <!-- Nouveau mot de passe -->
+      <div class="form-group">
+        <label for="newPassword">Nouveau mot de passe</label>
+        <input
+          type="password"
+          id="newPassword"
+          formControlName="newPassword"
+          placeholder="••••••••"
+          autocomplete="new-password"
+        />
+        @if (controls.newPassword.invalid && controls.newPassword.touched) {
+          <div class="field-error" role="alert">
+            @if (controls.newPassword.hasError('required')) { <p>Le nouveau mot de passe est requis</p> }
+            @if (controls.newPassword.hasError('minlength')) { <p>Minimum 8 caractères</p> }
+          </div>
+        }
+      </div>
+
+      <!-- Confirmation -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="••••••••"
+          autocomplete="new-password"
+        />
+        @if (controls.confirmPassword.touched && passwordForm.hasError('passwordMismatch')) {
+          <div class="field-error" role="alert">
+            <p>Les mots de passe ne correspondent pas</p>
+          </div>
+        }
+      </div>
+
+      <button type="submit" class="btn-save" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span>Mise à jour…</span>
+        } @else {
+          <span>Mettre à jour le mot de passe</span>
+        }
+      </button>
+
+    </form>
+  </section>
+
+</div>

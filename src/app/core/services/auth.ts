@@ -1,4 +1,4 @@
-import { LoginRequest, LoginResponse, RegisterRequest, User } from '../../shared/models/user.model';
+import { ChangePasswordRequest, LoginRequest, LoginResponse, RegisterRequest, User } from '../../shared/models/user.model';
 import { inject, Injectable, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -47,6 +47,8 @@ export class Auth {
   /**
    * Valide explicitement la forme de l'objet issu du localStorage.
    * Évite d'accepter des données malformées ou manipulées (XSS, extension tierce).
+   * firstName et lastName sont optionnels (peuvent être null ou absents pour les
+   * comptes créés avant LF-51).
    */
   private isValidUser(data: unknown): data is User {
     return (
@@ -69,6 +71,10 @@ export class Auth {
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, data).pipe(
       tap(response => this.persistSession(response)),
     );
+  }
+
+  changePassword(data: ChangePasswordRequest): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/me/password`, data);
   }
 
   /**

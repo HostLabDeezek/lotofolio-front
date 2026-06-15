@@ -16,12 +16,20 @@ export class HeaderComponent {
   protected readonly dropdownOpen = signal(false);
 
   protected readonly userInitials = computed(() => {
-    const username = this.authService.user()?.username?.trim() ?? '';
+    const user = this.authService.user();
+    if (!user) return '?';
+
+    // Priorité : firstName + lastName (LF-51)
+    const first = user.firstName?.trim();
+    const last = user.lastName?.trim();
+    if (first && last) return (first[0] + last[0]).toUpperCase();
+    if (first) return first.slice(0, 2).toUpperCase();
+
+    // Fallback : username
+    const username = user.username?.trim() ?? '';
     if (!username) return '?';
     const parts = username.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return username.slice(0, 2).toUpperCase();
   });
 
