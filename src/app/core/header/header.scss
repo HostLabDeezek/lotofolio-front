@@ -202,11 +202,25 @@
   border: none;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.12s ease;
 
   &:hover {
     background: rgba(vars.$navy, 0.06);
   }
+
+  &--danger {
+    color: #c0392b;
+    &:hover {
+      background: rgba(#c0392b, 0.06);
+    }
+  }
+}
+
+.dropdown-divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid rgba(vars.$navy, 0.08);
 }
 
 // Boutons auth (non connecté)

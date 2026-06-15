@@ -54,7 +54,7 @@
           type="number"
           inputmode="numeric"
           min="1"
-          max="5"
+          [attr.max]="isAdmin() ? null : maxGrilles"
           [value]="flashCount()"
           [disabled]="disabled() || animating()"
           [attr.aria-invalid]="flashCountInvalid() || null"
@@ -71,7 +71,7 @@
     </div>
 
     <div class="grille__list">
-      @for (grille of grilles(); track grille.id; let i = $index) {
+      @for (grille of visibleGrilles(); track grille.id; let i = $index) {
         <app-grille-card
           [jeu]="jeu"
           [grille]="grille"
@@ -83,6 +83,11 @@
           (deleted)="removeGrille(grille.id)"
         />
       }
+      @if (hiddenGrillesCount() > 0) {
+        <p class="grille__hidden-info">
+          + {{ hiddenGrillesCount() }} grille(s) supplémentaire(s) seront soumises.
+        </p>
+      }
     </div>
 
     <div class="grille__actions">
@@ -91,7 +96,7 @@
         class="grille__add"
         [disabled]="disabled() || animating() || !canAddGrille()"
         [attr.aria-label]="'Ajouter une grille'"
-        [attr.title]="!canAddGrille() ? 'Maximum 5 grilles à la fois' : null"
+        [attr.title]="!canAddGrille() ? 'Maximum ' + maxGrilles + ' grilles à la fois' : null"
         (click)="addGrille()"
       >
         <span aria-hidden="true">+</span>

@@ -16,17 +16,20 @@ interface ErrorBody {
  * Normalise toute erreur HTTP en `ApiError` (status + code + message + details).
  *
  * Sur une réponse 401 (token expiré ou invalide) :
- * - Appelle auth.logout() (idempotent grâce au flag loggingOut) qui purge la
- *   session et redirige vers /login.
- * - Retourne NEVER pour que les composants ne reçoivent pas d'erreur parasite
- *   (la navigation va de toute façon les détruire).
+ * - Si l'utilisateur est authentifié (token présent) : appelle auth.logout()
+ *   et retourne NEVER pour que les composants ne reçoivent pas d'erreur
+ *   parasite (la navigation va de toute façon les détruire).
+ * - Si l'utilisateur n'est PAS authentifié (ex : tentative de login échouée) :
+ *   propage une ApiError normalement pour que le composant puisse réinitialiser
+ *   son état de chargement et afficher un message d'erreur.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
+      if (err.status === 401 && auth.getToken()) {
+        // Token expiré/invalide sur une session active → déconnexion forcée
         auth.logout();
         return NEVER;
       }

@@ -31,7 +31,11 @@
           </button>
           @if (dropdownOpen()) {
             <div class="dropdown-menu" role="menu">
-              <button class="dropdown-item" role="menuitem" (click)="logout()">
+              <a class="dropdown-item" role="menuitem" routerLink="/parametres" (click)="dropdownOpen.set(false)">
+                Paramètres
+              </a>
+              <hr class="dropdown-divider" />
+              <button class="dropdown-item dropdown-item--danger" role="menuitem" (click)="logout()">
                 Se déconnecter
               </button>
             </div>

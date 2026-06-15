@@ -15,7 +15,7 @@ export interface GrilleLocalState {
   selectedNumeroChance: number[];
 }
 
-/** Nombre maximum de grilles composables simultanément (contrainte front). */
+/** Nombre maximum de grilles composables simultanément pour un USER. */
 export const MAX_GRILLES = 5;
 
 /**

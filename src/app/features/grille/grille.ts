@@ -21,6 +21,7 @@ import {
   PlayPayload,
   Tirage,
 } from '../../shared/models/grille.model';
+import { Auth } from '../../core/services/auth';
 import { JeuStore } from '../../shared/stores/jeu.store';
 import { TirageService } from '../../shared/services/tirage.service';
 import { PartieService } from '../../shared/services/partie.service';
@@ -58,6 +59,7 @@ export class Grille implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly zone = inject(NgZone);
+  private readonly authService = inject(Auth);
 
   /** Délai entre deux numéros allumés pendant l'animation (ms). */
   private readonly animationIntervalMs = 150;
@@ -99,6 +101,14 @@ export class Grille implements OnInit, OnDestroy {
 
   /** Animation de flash en cours : verrouille les grilles et la barre de flash. */
   readonly animating = signal<boolean>(false);
+
+  /** Exposé au template pour l'attribut max de l'input flash. */
+  protected readonly maxGrilles = MAX_GRILLES;
+
+  /** Vrai si l'utilisateur connecté est admin. */
+  protected readonly isAdmin = computed<boolean>(
+    () => this.authService.user()?.role === 'ADMIN',
+  );
 
   /** Heure (ms) du tirage en cours, ou `null`. */
   private readonly drawAt = computed<number | null>(() => {
@@ -145,10 +155,11 @@ export class Grille implements OnInit, OnDestroy {
     return `Il vous reste ${Math.ceil(remaining / (60 * 1000))} min`;
   });
 
-  /** Saisie de flash invalide (hors 1..5 ou non entière). */
+  /** Saisie de flash invalide : hors 1..MAX_GRILLES pour les users ; seul n < 1 invalide pour les admins. */
   readonly flashCountInvalid = computed<boolean>(() => {
     const n = this.flashCount();
-    return !Number.isInteger(n) || n < 1 || n > MAX_GRILLES;
+    if (!Number.isInteger(n) || n < 1) return true;
+    return !this.isAdmin() && n > MAX_GRILLES;
   });
 
   /** Message d'erreur sous le champ ; null tant que la saisie est valide. */
@@ -161,11 +172,27 @@ export class Grille implements OnInit, OnDestroy {
     () => !this.flashCountInvalid() && !this.disabled() && !this.animating(),
   );
 
-  /** On peut ajouter une grille tant qu'on est sous le plafond front (5). */
-  readonly canAddGrille = computed<boolean>(() => this.grilles().length < MAX_GRILLES);
+  /** On peut ajouter une grille : illimité pour admin, plafonné à MAX_GRILLES pour user. */
+  readonly canAddGrille = computed<boolean>(() =>
+    this.isAdmin() || this.grilles().length < MAX_GRILLES,
+  );
 
   /** On ne peut pas supprimer la dernière grille restante. */
   readonly canRemoveGrille = computed<boolean>(() => this.grilles().length > 1);
+
+  /**
+   * Grilles affichées dans l'UI : les 5 premières (MAX_GRILLES).
+   * Évite de rendre des centaines de cartes quand un admin flashe un grand nombre.
+   * Toutes les grilles (y compris celles non affichées) sont soumises au back.
+   */
+  readonly visibleGrilles = computed<GrilleLocalState[]>(() =>
+    this.grilles().slice(0, MAX_GRILLES),
+  );
+
+  /** Nombre de grilles non affichées (pour l'indicateur admin). */
+  readonly hiddenGrillesCount = computed<number>(() =>
+    Math.max(0, this.grilles().length - MAX_GRILLES),
+  );
 
   /** Toutes les grilles sont complètes (quotas du jeu atteints partout). */
   readonly allComplete = computed<boolean>(() => {

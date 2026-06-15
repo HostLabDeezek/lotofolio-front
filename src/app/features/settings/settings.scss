@@ -1,0 +1,195 @@
+@use 'variables' as vars;
+
+:host {
+  display: block;
+  background: #F2F4F8;
+  padding: 1.5rem 0 2rem;
+}
+
+.settings-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+// ── En-tête ──────────────────────────────────────
+
+.settings-header {
+  margin-bottom: 1.5rem;
+}
+
+.settings-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: vars.$text-dark;
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.02em;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 3px;
+    background: vars.$blue;
+    margin-top: 0.6rem;
+  }
+}
+
+// ── Cartes ───────────────────────────────────────
+
+.settings-card {
+  background: vars.$white;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(vars.$navy, 0.08);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: vars.$text-dark;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(vars.$navy, 0.08);
+  letter-spacing: -0.01em;
+}
+
+// ── Lignes d'info (lecture seule) ────────────────
+
+.info-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(vars.$navy, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.info-label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: vars.$text-muted;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: vars.$text-dark;
+  text-align: right;
+
+  &--role {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(vars.$blue, 0.1);
+    color: vars.$blue;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+  }
+}
+
+// ── Alertes ──────────────────────────────────────
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+
+  &--success {
+    background: rgba(#16a34a, 0.1);
+    color: #15803d;
+    border: 1px solid rgba(#16a34a, 0.2);
+  }
+
+  &--error {
+    background: rgba(vars.$danger, 0.08);
+    color: vars.$danger;
+    border: 1px solid rgba(vars.$danger, 0.2);
+  }
+}
+
+// ── Formulaire ───────────────────────────────────
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+
+  label {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: vars.$text-dark;
+  }
+
+  input {
+    height: 44px;
+    padding: 0 0.9rem;
+    border: 1.5px solid rgba(vars.$navy, 0.18);
+    border-radius: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.875rem;
+    color: vars.$text-dark;
+    background: vars.$white;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+
+    &:focus {
+      border-color: vars.$blue;
+      box-shadow: 0 0 0 3px rgba(vars.$blue, 0.12);
+    }
+
+    &::placeholder {
+      color: vars.$text-muted;
+      opacity: 0.6;
+    }
+  }
+}
+
+.field-error {
+  p {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.75rem;
+    color: vars.$danger;
+    margin: 0;
+  }
+}
+
+.btn-save {
+  margin-top: 0.5rem;
+  width: 100%;
+  height: 46px;
+  background: vars.$blue;
+  color: vars.$white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: vars.$blue-hover;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
