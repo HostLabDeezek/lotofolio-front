@@ -1,5 +1,17 @@
 <header class="header">
   <div class="container">
+    <!-- Hamburger (mobile) — en premier dans le DOM pour apparaître à gauche du logo -->
+    <button
+      class="hamburger"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      [attr.aria-label]="menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <!-- Logo -->
     <div class="logo">
       <a routerLink="/">
@@ -48,18 +60,6 @@
         </div>
       }
     </div>
-
-    <!-- Hamburger (mobile) -->
-    <button
-      class="hamburger"
-      (click)="toggleMenu()"
-      [attr.aria-expanded]="menuOpen()"
-      [attr.aria-label]="menuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
-    >
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
   </div>
 
   <!-- Navigation mobile -->
